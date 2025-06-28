@@ -1,6 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+import authRoutes from "./routes/auth.routes.js";
 
 dotenv.config();//to get enviorment variables
 
@@ -9,6 +10,9 @@ const port = 5000;
 
 app.use(express.json()); //to read json data
 app.use(express.urlencoded({ extended: true})) //for url encoded data, form data
+
+// Routes
+app.use("/api/auth", authRoutes);
 
 mongoose.connect(process.env.MONGO_URI)
             .then(()=>{
