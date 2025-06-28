@@ -2,6 +2,37 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 export default function LoginPage() {
+
+  const handleLogin = async(e)=>{
+    e.preventDefault();
+
+    const url = new URLSearchParams();
+        // url.append('email', email);
+        // url.append('password', password);
+        // setIsLoading(true);
+
+    try{
+
+      const response = await fetch("http://localhost:5000/api/auth/login",
+        {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/w-xxx-form-urlencoded'},
+        body: url.toString()
+        }
+      );
+      
+      await response.json();
+
+      if(response.ok){
+        //add code later toast successfull
+      }else{
+        // toast unsuccesfull  message
+      }
+    
+    } catch (err) {
+      //toast error message
+    }
+  } 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 relative overflow-hidden">
             {/* Floating shapes */}
@@ -12,7 +43,7 @@ export default function LoginPage() {
                 <div className="text-5xl mb-4 animate-bounce">🔐</div>
                 <h2 className="text-3xl font-bold text-white mb-2">Welcome Back!</h2>
                 <p className="text-purple-200 mb-6 text-center italic">"Creativity is intelligence having fun."<br /><span className="text-purple-300 font-semibold">- Albert Einstein</span></p>
-                <form className="w-full flex flex-col gap-4">
+                <form className="w-full flex flex-col gap-4" onSubmit={handleLogin}>
                     <input
                         type="email"
                         placeholder="Email"
