@@ -1,0 +1,73 @@
+import React from "react";
+import { Link } from "react-router-dom";
+
+export default function LoginPage() {
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 relative overflow-hidden">
+            {/* Floating shapes */}
+            <div className="absolute top-10 left-10 w-32 h-32 bg-pink-400 bg-opacity-30 rounded-full blur-2xl animate-float-slow" />
+            <div className="absolute bottom-20 right-20 w-40 h-40 bg-indigo-400 bg-opacity-20 rounded-full blur-2xl animate-float" />
+            <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-purple-400 bg-opacity-20 rounded-full blur-2xl animate-float-delayed" />
+            <div className="relative z-10 w-full max-w-md p-8 bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 flex flex-col items-center animate-pop-in">
+                <div className="text-5xl mb-4 animate-bounce">🔐</div>
+                <h2 className="text-3xl font-bold text-white mb-2">Welcome Back!</h2>
+                <p className="text-purple-200 mb-6 text-center italic">"Creativity is intelligence having fun."<br /><span className="text-purple-300 font-semibold">- Albert Einstein</span></p>
+                <form className="w-full flex flex-col gap-4">
+                    <input
+                        type="email"
+                        placeholder="Email"
+                        className="px-4 py-3 rounded-xl bg-white/30 text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-pink-400 transition"
+                        autoComplete="email"
+                    />
+                    <input
+                        type="password"
+                        placeholder="Password"
+                        className="px-4 py-3 rounded-xl bg-white/30 text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-pink-400 transition"
+                        autoComplete="current-password"
+                    />
+                    <button
+                        type="submit"
+                        className="mt-2 bg-gradient-to-r from-indigo-500 to-pink-500 text-white font-bold py-3 rounded-xl shadow-lg hover:scale-105 transition-transform text-lg"
+                    >
+                        Login
+                    </button>
+                </form>
+                <div className="mt-6 text-purple-200">
+                    New here?{' '}
+                    <Link to="/register" className="text-pink-300 font-semibold hover:underline">
+                        Create an account
+                    </Link>
+                </div>
+            </div>
+            <style>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-20px); }
+        }
+        .animate-float {
+          animation: float 3s ease-in-out infinite;
+        }
+        .animate-float-delayed {
+          animation: float 3s ease-in-out infinite 1.5s;
+        }
+        .animate-float-slow {
+          animation: float 5s ease-in-out infinite 2s;
+        }
+        @keyframes pop-in {
+          0% { opacity: 0; transform: scale(0.8); }
+          100% { opacity: 1; transform: scale(1); }
+        }
+        .animate-pop-in {
+          animation: pop-in 0.7s cubic-bezier(0.4,0,0.2,1) both;
+        }
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
+        }
+        .animate-bounce {
+          animation: bounce 1.2s infinite;
+        }
+      `}</style>
+        </div>
+    );
+} 
