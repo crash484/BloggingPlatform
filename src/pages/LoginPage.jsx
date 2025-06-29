@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import {setCredentials} from '../store/authSlice';
+import { setCredentials } from '../store/authSlice';
 import { useDispatch } from "react-redux";
 
 export default function LoginPage() {
@@ -53,13 +53,12 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        toast.success("login successful");
+        toast.success("Login successful!");
         dispatch(setCredentials({
-          user:{ name: data.name , token : data.token }
+          user: { _id: data.user._id, name: data.user.name, email: data.user.email },
+          token: data.token
         }));
-        //navigate() to dashboard
-
-        
+        navigate('/dashboard');
       } else {
         toast.error(data.message || 'Login failed. Please check your credentials.');
       }
@@ -73,7 +72,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 relative overflow-hidden">
       {/* Floating shapes */}
-      <Toaster/>
+      <Toaster />
       <div className="absolute top-10 left-10 w-32 h-32 bg-pink-400 bg-opacity-30 rounded-full blur-2xl animate-float-slow" />
       <div className="absolute bottom-20 right-20 w-40 h-40 bg-indigo-400 bg-opacity-20 rounded-full blur-2xl animate-float" />
       <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-purple-400 bg-opacity-20 rounded-full blur-2xl animate-float-delayed" />

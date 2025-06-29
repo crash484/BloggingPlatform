@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 export default function RegisterPage() {
@@ -11,6 +11,7 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -58,6 +59,9 @@ export default function RegisterPage() {
       if (response.ok) {
         setSuccess('Registration successful! Please login.');
         setFormData({ name: '', email: '', password: '' });
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
       } else {
         setError(data.message || 'Registration failed. Please try again.');
       }

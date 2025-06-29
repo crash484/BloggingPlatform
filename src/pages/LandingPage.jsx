@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "../store/authSlice";
 
 const features = [
     {
@@ -79,6 +81,7 @@ export default function LandingPage() {
     const [currentTestimonial, setCurrentTestimonial] = useState(0);
     const [currentCategory, setCurrentCategory] = useState(0);
     const [currentQuote, setCurrentQuote] = useState(0);
+    const currentUser = useSelector(selectCurrentUser);
 
     useEffect(() => {
         setIsVisible(true);
@@ -122,12 +125,25 @@ export default function LandingPage() {
                     <a href="#about" className="hover:text-purple-300 transition-colors">About</a>
                 </div>
                 <div className="flex items-center space-x-4">
-                    <Link to="/login" className="px-5 py-2 rounded-full font-semibold bg-gradient-to-r from-indigo-500 to-pink-500 hover:from-pink-500 hover:to-indigo-500 transition-all duration-300 shadow-lg">
-                        Login
-                    </Link>
-                    <Link to="/register" className="px-5 py-2 rounded-full font-semibold bg-gradient-to-r from-pink-500 to-yellow-500 hover:from-yellow-500 hover:to-pink-500 transition-all duration-300 shadow-lg">
-                        Register
-                    </Link>
+                    {currentUser ? (
+                        <>
+                            <Link to="/dashboard" className="px-5 py-2 rounded-full font-semibold bg-gradient-to-r from-green-500 to-blue-500 hover:from-blue-500 hover:to-green-500 transition-all duration-300 shadow-lg">
+                                Dashboard
+                            </Link>
+                            <Link to="/blogs" className="px-5 py-2 rounded-full font-semibold bg-gradient-to-r from-indigo-500 to-pink-500 hover:from-pink-500 hover:to-indigo-500 transition-all duration-300 shadow-lg">
+                                My Blogs
+                            </Link>
+                        </>
+                    ) : (
+                        <>
+                            <Link to="/login" className="px-5 py-2 rounded-full font-semibold bg-gradient-to-r from-indigo-500 to-pink-500 hover:from-pink-500 hover:to-indigo-500 transition-all duration-300 shadow-lg">
+                                Login
+                            </Link>
+                            <Link to="/register" className="px-5 py-2 rounded-full font-semibold bg-gradient-to-r from-pink-500 to-yellow-500 hover:from-yellow-500 hover:to-pink-500 transition-all duration-300 shadow-lg">
+                                Register
+                            </Link>
+                        </>
+                    )}
                 </div>
             </nav>
 
@@ -162,12 +178,21 @@ export default function LandingPage() {
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-                        <Link
-                            to="/register"
-                            className="bg-gradient-to-r from-purple-500 to-pink-500 px-8 py-4 rounded-full text-lg font-semibold hover:scale-105 hover:shadow-2xl transition-all duration-300 animate-pulse text-center"
-                        >
-                            Start Writing Free
-                        </Link>
+                        {currentUser ? (
+                            <Link
+                                to="/blogs/create"
+                                className="bg-gradient-to-r from-purple-500 to-pink-500 px-8 py-4 rounded-full text-lg font-semibold hover:scale-105 hover:shadow-2xl transition-all duration-300 animate-pulse text-center"
+                            >
+                                Create New Blog
+                            </Link>
+                        ) : (
+                            <Link
+                                to="/register"
+                                className="bg-gradient-to-r from-purple-500 to-pink-500 px-8 py-4 rounded-full text-lg font-semibold hover:scale-105 hover:shadow-2xl transition-all duration-300 animate-pulse text-center"
+                            >
+                                Start Writing Free
+                            </Link>
+                        )}
                     </div>
                 </div>
 
