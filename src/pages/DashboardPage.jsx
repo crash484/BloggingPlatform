@@ -14,10 +14,23 @@ export default function DashboardPage() {
     const isLoading = useSelector(selectBlogLoading);
 
     useEffect(() => {
+        if (!currentUser) {
+            navigate('/login');
+            return;
+        }
         dispatch(fetchBlogs());
-    }, [dispatch]);
+    }, [dispatch, currentUser, navigate]);
 
-    const userBlogs = blogs.filter(blog => blog.author._id === currentUser._id);
+    // Guard clause to prevent errors if user data isn't loaded
+    if (!currentUser) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-lg">Loading...</div>
+            </div>
+        );
+    }
+
+    const userBlogs = blogs.filter(blog => blog.author && blog.author._id === currentUser._id);
     const totalBlogs = blogs.length;
     const userBlogCount = userBlogs.length;
 
