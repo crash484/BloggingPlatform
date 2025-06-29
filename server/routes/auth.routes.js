@@ -2,7 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import User from "../models/user.model.js";
+import User from "../models/UserModel.js";
 import { verifyToken } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
@@ -11,7 +11,7 @@ const key = process.env.SECRET_KEY;
 
 router.post("/register", async (req,res)=>{
     try{
-        const {username,email,password} = req.body;
+        const {name,email,password} = req.body;
 
         //check if user with email already exists or not
         const alreadyExists = await User.findOne({email});
@@ -21,7 +21,7 @@ router.post("/register", async (req,res)=>{
 
         const hashed = await bcrypt.hash(password, 10);
 
-        const user = new User({ username,email, password:hashed});
+        const user = new User({ username: name,email, password:hashed});
         
         const result = await user.save();
         
@@ -45,18 +45,27 @@ router.post("/login", async (req,res)=>{
         const isMatch = await bcrypt.compare(password, user.password);
 
         if( isMatch ) {
-            jwt.sign(user.toJson(),key,{expiresIn:'1h'},(err,token)=>{
+            // Create a clean payload without sensitive data
+            const payload = {
+                id: user._id,
+                email: user.email,
+                username: user.username
+            };
 
-                if(err) console.log(err);
+            jwt.sign(payload, key, {expiresIn:'1h'}, (err, token) => {
+                if(err) {
+                    console.log("JWT signing error:", err);
+                    return res.status(500).json({message: "Error generating token"});
+                }
 
-                return res.status(201).json({
-                    token,
-                    name:`${user.name}`,
-                    message:"successfully logged in"
+                return res.status(200).json({
+                    token: token,
+                    name: user.username,
+                    message: "successfully logged in"
                 });
-            })
-        }else {
-            return res.status(500).json({message: "invalid password"});
+            });
+        } else {
+            return res.status(401).json({message: "invalid password"});
         }
     }catch (err) {
         console.log("error in login backend ",err.message);
@@ -67,3 +76,6 @@ router.post("/login", async (req,res)=>{
 router.post('/verify',verifyToken,(req,res)=>{ 
     res.json({message:"user is verified"})
   });
+
+
+export default router;
