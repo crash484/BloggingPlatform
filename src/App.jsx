@@ -1,5 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { useDispatch } from 'react-redux';
+import { useEffect } from 'react';
+import { setCredentials } from './store/authSlice';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -11,6 +14,17 @@ import Navigation from './components/Navigation';
 import './App.css';
 
 function App() {
+  const dispatch = useDispatch();
+
+  // Rehydrate Redux state from localStorage on app load
+  useEffect(() => {
+    const user = localStorage.getItem('authUser');
+    const token = localStorage.getItem('authToken');
+    if (user && token) {
+      dispatch(setCredentials({ user: JSON.parse(user), token }));
+    }
+  }, [dispatch]);
+
   return (
     <Router>
       <div className="App">

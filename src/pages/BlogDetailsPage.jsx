@@ -18,6 +18,7 @@ export default function BlogDetailsPage() {
 
     useEffect(() => {
         if (blogId) {
+            console.log("BlogDetailsPage: Fetching blog with ID:", blogId);
             dispatch(fetchBlogById(blogId));
         }
 
@@ -26,6 +27,13 @@ export default function BlogDetailsPage() {
             dispatch(clearCurrentBlog());
         };
     }, [dispatch, blogId]);
+
+    useEffect(() => {
+        console.log("BlogDetailsPage: Current user:", currentUser);
+        console.log("BlogDetailsPage: Current blog:", currentBlog);
+        console.log("BlogDetailsPage: Loading:", isLoading);
+        console.log("BlogDetailsPage: Error:", error);
+    }, [currentUser, currentBlog, isLoading, error]);
 
     useEffect(() => {
         if (error) {
@@ -66,6 +74,7 @@ export default function BlogDetailsPage() {
     };
 
     if (!currentUser) {
+        console.log("BlogDetailsPage: No current user, showing login prompt");
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-900 via-purple-900 to-indigo-900">
                 <div className="text-white text-center">
@@ -76,6 +85,35 @@ export default function BlogDetailsPage() {
                     >
                         Go to Login
                     </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (error && !isLoading) {
+        console.log("BlogDetailsPage: Rendering error state");
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-900 via-purple-900 to-indigo-900">
+                <div className="text-white text-center">
+                    <h2 className="text-2xl font-bold mb-4">Error loading blog</h2>
+                    <p className="mb-4">{error}</p>
+                    <div className="flex gap-4 justify-center">
+                        <button
+                            onClick={() => {
+                                dispatch(clearError());
+                                if (blogId) dispatch(fetchBlogById(blogId));
+                            }}
+                            className="bg-gradient-to-r from-pink-500 to-indigo-500 px-6 py-2 rounded-lg hover:scale-105 transition-transform"
+                        >
+                            Try Again
+                        </button>
+                        <button
+                            onClick={handleBackToList}
+                            className="bg-gradient-to-r from-gray-500 to-gray-600 px-6 py-2 rounded-lg hover:scale-105 transition-transform"
+                        >
+                            Back to Blogs
+                        </button>
+                    </div>
                 </div>
             </div>
         );
@@ -131,10 +169,10 @@ export default function BlogDetailsPage() {
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 bg-gradient-to-r from-pink-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                                    {currentBlog.author.name.charAt(0).toUpperCase()}
+                                    {currentBlog.author?.username?.charAt(0).toUpperCase() || currentBlog.author?.name?.charAt(0).toUpperCase() || 'U'}
                                 </div>
                                 <div>
-                                    <p className="text-white font-semibold">{currentBlog.author.name}</p>
+                                    <p className="text-white font-semibold">{currentBlog.author?.username || currentBlog.author?.name || 'Unknown Author'}</p>
                                     <p className="text-purple-300 text-sm">Author</p>
                                 </div>
                             </div>
@@ -146,7 +184,7 @@ export default function BlogDetailsPage() {
                         </div>
 
                         {/* Action Buttons for Author */}
-                        {currentUser._id === currentBlog.author._id && (
+                        {currentUser?._id === currentBlog.author?._id && (
                             <div className="flex gap-3 mt-6">
                                 <button
                                     onClick={handleEdit}

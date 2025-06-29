@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { setCredentials } from '../store/authSlice';
 import { useDispatch } from "react-redux";
@@ -13,7 +13,6 @@ export default function LoginPage() {
     password: ''
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
@@ -22,17 +21,14 @@ export default function LoginPage() {
       ...prev,
       [name]: value
     }));
-    // Clear error when user starts typing
-    if (error) setError('');
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError('');
 
     // Basic validation
     if (!formData.email.trim() || !formData.password.trim()) {
-      setError('All fields are required');
+      toast.error('All fields are required');
       return;
     }
 
@@ -54,17 +50,26 @@ export default function LoginPage() {
 
       if (response.ok) {
         toast.success("Login successful!");
-        dispatch(setCredentials({
+        console.log("Login response data:", data); // Debug log
+        
+        const userPayload = {
           user: { _id: data.user._id, name: data.user.name, email: data.user.email },
           token: data.token
-        }));
+        };
+        
+        console.log("Setting credentials with:", userPayload); // Debug log
+        
+        // Save to localStorage for persistence
+        localStorage.setItem('authUser', JSON.stringify(userPayload.user));
+        localStorage.setItem('authToken', userPayload.token);
+        
+        dispatch(setCredentials(userPayload));
         navigate('/dashboard');
       } else {
         toast.error(data.message || 'Login failed. Please check your credentials.');
       }
-
     } catch (err) {
-      setError('Network error. Please check your connection.');
+      toast.error('Network error. Please check your connection.');
     } finally {
       setIsLoading(false);
     }
@@ -72,7 +77,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 relative overflow-hidden">
       {/* Floating shapes */}
-      <Toaster />
       <div className="absolute top-10 left-10 w-32 h-32 bg-pink-400 bg-opacity-30 rounded-full blur-2xl animate-float-slow" />
       <div className="absolute bottom-20 right-20 w-40 h-40 bg-indigo-400 bg-opacity-20 rounded-full blur-2xl animate-float" />
       <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-purple-400 bg-opacity-20 rounded-full blur-2xl animate-float-delayed" />
@@ -80,13 +84,6 @@ export default function LoginPage() {
         <div className="text-5xl mb-4 animate-bounce">🔐</div>
         <h2 className="text-3xl font-bold text-white mb-2">Welcome Back!</h2>
         <p className="text-purple-200 mb-6 text-center italic">"Creativity is intelligence having fun."<br /><span className="text-purple-300 font-semibold">- Albert Einstein</span></p>
-
-        {/* Error Message */}
-        {error && (
-          <div className="w-full mb-4 p-3 bg-red-500/20 border border-red-400/50 rounded-lg text-red-200 text-sm">
-            {error}
-          </div>
-        )}
 
         <form className="w-full flex flex-col gap-4" onSubmit={handleLogin}>
           <input

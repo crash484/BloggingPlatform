@@ -18,6 +18,13 @@ export default function BlogListPage() {
     useEffect(() => {
         dispatch(fetchBlogs());
     }, [dispatch]);
+//rermove this in production
+    useEffect(() => {
+        console.log("BlogListPage: Current user:", currentUser);
+        console.log("BlogListPage: Blogs:", blogs);
+        console.log("BlogListPage: Loading:", isLoading);
+        console.log("BlogListPage: Error:", error);
+    }, [currentUser, blogs, isLoading, error]);
 
     useEffect(() => {
         if (error) {
@@ -68,6 +75,7 @@ export default function BlogListPage() {
     };
 
     if (!currentUser) {
+        console.log("BlogListPage: No current user, showing login prompt");
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-900 via-purple-900 to-indigo-900">
                 <div className="text-white text-center">
@@ -77,6 +85,28 @@ export default function BlogListPage() {
                         className="bg-gradient-to-r from-pink-500 to-indigo-500 px-6 py-2 rounded-lg hover:scale-105 transition-transform"
                     >
                         Go to Login
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // Add error boundary
+    if (error && !isLoading) {
+        console.log("BlogListPage: Rendering error state");
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-900 via-purple-900 to-indigo-900">
+                <div className="text-white text-center">
+                    <h2 className="text-2xl font-bold mb-4">Error loading blogs</h2>
+                    <p className="mb-4">{error}</p>
+                    <button
+                        onClick={() => {
+                            dispatch(clearError());
+                            dispatch(fetchBlogs());
+                        }}
+                        className="bg-gradient-to-r from-pink-500 to-indigo-500 px-6 py-2 rounded-lg hover:scale-105 transition-transform"
+                    >
+                        Try Again
                     </button>
                 </div>
             </div>
@@ -145,9 +175,9 @@ export default function BlogListPage() {
                                     <div className="flex items-center justify-between text-sm text-purple-300 mb-4">
                                         <div className="flex items-center gap-2">
                                             <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold">
-                                                {blog.author.name.charAt(0).toUpperCase()}
+                                                {blog.author?.username?.charAt(0).toUpperCase() || blog.author?.name?.charAt(0).toUpperCase() || 'U'}
                                             </div>
-                                            <span>{blog.author.name}</span>
+                                            <span>{blog.author?.username || blog.author?.name || 'Unknown'}</span>
                                         </div>
                                         <span>{formatDate(blog.createdAt)}</span>
                                     </div>
@@ -161,7 +191,7 @@ export default function BlogListPage() {
                                             Read More
                                         </button>
 
-                                        {currentUser._id === blog.author._id && (
+                                        {currentUser?._id === blog.author?._id && (
                                             <>
                                                 <button
                                                     onClick={() => handleEdit(blog._id)}

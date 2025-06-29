@@ -5,7 +5,7 @@ export const fetchBlogs = createAsyncThunk(
     'blog/fetchBlogs',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await fetch('http://localhost:5000/api/blogs')
+            const response = await fetch('http://localhost:5000/api/auth/blogs')
             const data = await response.json()
             if (!response.ok) throw new Error(data.message)
             return data
@@ -19,7 +19,7 @@ export const fetchBlogById = createAsyncThunk(
     'blog/fetchBlogById',
     async (blogId, { rejectWithValue }) => {
         try {
-            const response = await fetch(`http://localhost:5000/api/blogs/${blogId}`)
+            const response = await fetch(`http://localhost:5000/api/auth/blogs/${blogId}`)
             const data = await response.json()
             if (!response.ok) throw new Error(data.message)
             return data
@@ -34,7 +34,8 @@ export const createBlog = createAsyncThunk(
     async (blogData, { rejectWithValue, getState }) => {
         try {
             const { token } = getState().auth
-            const response = await fetch('http://localhost:5000/api/blogs', {
+            console.log(blogData);
+            const response = await fetch('http://localhost:5000/api/auth/blogs', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -42,6 +43,7 @@ export const createBlog = createAsyncThunk(
                 },
                 body: JSON.stringify(blogData)
             })
+
             const data = await response.json()
             if (!response.ok) throw new Error(data.message)
             return data
@@ -56,7 +58,7 @@ export const updateBlog = createAsyncThunk(
     async ({ blogId, blogData }, { rejectWithValue, getState }) => {
         try {
             const { token } = getState().auth
-            const response = await fetch(`http://localhost:5000/api/blogs/${blogId}`, {
+            const response = await fetch(`http://localhost:5000/api/auth/blogs/${blogId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -78,7 +80,7 @@ export const deleteBlog = createAsyncThunk(
     async (blogId, { rejectWithValue, getState }) => {
         try {
             const { token } = getState().auth
-            const response = await fetch(`http://localhost:5000/api/blogs/${blogId}`, {
+            const response = await fetch(`http://localhost:5000/api/auth/blogs/${blogId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
