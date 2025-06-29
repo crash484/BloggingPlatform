@@ -1,7 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import jwt, { verify } from "jsonwebtoken";
 import User from "../models/UserModel.js";
 import { verifyToken } from "../middleware/auth.middleware.js";
 
@@ -78,8 +78,32 @@ router.post("/login", async (req,res)=>{
 })
 
 router.post('/verify',verifyToken,(req,res)=>{ 
-    res.json({message:"user is verified"})
-  });
+    res.json({message:"user is verified"});
+})
 
+//path to to retrieve all blogs
+router.get("/blogs",async (req,res)=>{
+//find the user and all blogs which have user id will be returned?
+})
+
+//path to fetch one blog
+router.get("/blog/:id",async(req,res)=>{
+//find the blog by its id
+})
+
+//path to create a blog
+router.post("/blog",verify, async (req,res)=>{
+//get user id and then create a blog object and add the user id to it
+})
+
+//path to update blog
+router.put("/blogs/:id",verify, async( req,res)=>{
+//find the blog and update its content
+})
+
+//path to delete blog
+router.delete("/blogs/:id",verify,async(req,res)=>{
+//find and delete the blog
+})
 
 export default router;
