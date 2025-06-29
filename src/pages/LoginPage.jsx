@@ -1,14 +1,20 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import toast, { Toaster } from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import {setCredentials} from '../store/authSlice';
+import { useDispatch } from "react-redux";
 
 export default function LoginPage() {
+  const dispatch = useDispatch();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -47,15 +53,15 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        // Handle successful login - you can add navigation or store user data here
-        console.log('Login successful:', data);
-        // Example: store token in localStorage
-        if (data.token) {
-          localStorage.setItem('token', data.token);
-        }
-        // You can redirect to dashboard or home page here
+        toast.success("login successful");
+        dispatch(setCredentials({
+          user:{ name: data.name , token : data.token }
+        }));
+        //navigate() to dashboard
+
+        
       } else {
-        setError(data.message || 'Login failed. Please check your credentials.');
+        toast.error(data.message || 'Login failed. Please check your credentials.');
       }
 
     } catch (err) {
@@ -67,6 +73,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 relative overflow-hidden">
       {/* Floating shapes */}
+      <Toaster/>
       <div className="absolute top-10 left-10 w-32 h-32 bg-pink-400 bg-opacity-30 rounded-full blur-2xl animate-float-slow" />
       <div className="absolute bottom-20 right-20 w-40 h-40 bg-indigo-400 bg-opacity-20 rounded-full blur-2xl animate-float" />
       <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-purple-400 bg-opacity-20 rounded-full blur-2xl animate-float-delayed" />
