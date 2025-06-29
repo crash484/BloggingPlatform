@@ -34,6 +34,7 @@ export const createBlog = createAsyncThunk(
     async (blogData, { rejectWithValue, getState }) => {
         try {
             const { token } = getState().auth
+            console.log(blogData);
             const response = await fetch('http://localhost:5000/api/auth/blogs', {
                 method: 'POST',
                 headers: {
@@ -42,6 +43,7 @@ export const createBlog = createAsyncThunk(
                 },
                 body: JSON.stringify(blogData)
             })
+
             const data = await response.json()
             if (!response.ok) throw new Error(data.message)
             return data

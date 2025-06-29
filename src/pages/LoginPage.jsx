@@ -59,6 +59,10 @@ export default function LoginPage() {
         
         console.log("Setting credentials with:", userPayload); // Debug log
         
+        // Save to localStorage for persistence
+        localStorage.setItem('authUser', JSON.stringify(userPayload.user));
+        localStorage.setItem('authToken', userPayload.token);
+        
         dispatch(setCredentials(userPayload));
         navigate('/dashboard');
       } else {
