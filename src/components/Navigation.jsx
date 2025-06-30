@@ -41,8 +41,8 @@ export default function Navigation() {
                         <Link
                             to="/blogs"
                             className={`px-3 py-2 rounded-lg font-medium transition-colors ${isActive('/blogs')
-                                    ? 'bg-gradient-to-r from-pink-500 to-indigo-500 text-white'
-                                    : 'text-purple-200 hover:text-white hover:bg-white/10'
+                                ? 'bg-gradient-to-r from-pink-500 to-indigo-500 text-white'
+                                : 'text-purple-200 hover:text-white hover:bg-white/10'
                                 }`}
                         >
                             Blogs
@@ -50,11 +50,20 @@ export default function Navigation() {
                         <Link
                             to="/blogs/create"
                             className={`px-3 py-2 rounded-lg font-medium transition-colors ${isActive('/blogs/create')
-                                    ? 'bg-gradient-to-r from-pink-500 to-indigo-500 text-white'
-                                    : 'text-purple-200 hover:text-white hover:bg-white/10'
+                                ? 'bg-gradient-to-r from-pink-500 to-indigo-500 text-white'
+                                : 'text-purple-200 hover:text-white hover:bg-white/10'
                                 }`}
                         >
                             Create Blog
+                        </Link>
+                        <Link
+                            to={`/profile/${currentUser._id}`}
+                            className={`px-3 py-2 rounded-lg font-medium transition-colors ${location.pathname.startsWith('/profile/')
+                                ? 'bg-gradient-to-r from-pink-500 to-indigo-500 text-white'
+                                : 'text-purple-200 hover:text-white hover:bg-white/10'
+                                }`}
+                        >
+                            My Profile
                         </Link>
                     </div>
 
@@ -62,10 +71,10 @@ export default function Navigation() {
                     <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2">
                             <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold">
-                                {currentUser.name.charAt(0).toUpperCase()}
+                                {currentUser.username?.charAt(0).toUpperCase() || currentUser.name?.charAt(0).toUpperCase() || 'U'}
                             </div>
                             <span className="text-white font-medium hidden sm:block">
-                                {currentUser.name}
+                                {currentUser.username || currentUser.name}
                             </span>
                         </div>
 

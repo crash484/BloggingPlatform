@@ -42,8 +42,8 @@ export default function DashboardPage() {
         navigate('/blogs');
     };
 
-    const handleViewMyBlogs = () => {
-        navigate('/blogs');
+    const handleViewMyProfile = () => {
+        navigate(`/profile/${currentUser._id}`);
     };
 
     if (!currentUser) {
@@ -69,12 +69,23 @@ export default function DashboardPage() {
             <div className="max-w-6xl mx-auto px-4 py-8">
                 {/* Welcome Header */}
                 <div className="text-center mb-12">
+                    <div className="flex justify-center mb-6">
+                        <div className="w-24 h-24 bg-gradient-to-r from-pink-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-3xl">
+                            {currentUser.username?.charAt(0).toUpperCase() || currentUser.name?.charAt(0).toUpperCase() || 'U'}
+                        </div>
+                    </div>
                     <h1 className="text-5xl font-bold text-white mb-4">
-                        Welcome back, {currentUser.name}! 👋
+                        Welcome back, {currentUser.username || currentUser.name}! 👋
                     </h1>
-                    <p className="text-xl text-purple-200">
+                    <p className="text-xl text-purple-200 mb-6">
                         Ready to share your next amazing story?
                     </p>
+                    <button
+                        onClick={handleViewMyProfile}
+                        className="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold px-6 py-2 rounded-xl hover:scale-105 transition-transform"
+                    >
+                        View My Profile
+                    </button>
                 </div>
 
                 {/* Stats Cards */}
@@ -169,7 +180,7 @@ export default function DashboardPage() {
                                         {blog.title}
                                     </h4>
                                     <div className="flex items-center justify-between text-sm text-purple-300">
-                                        <span>{blog.author.name}</span>
+                                        <span>{blog.author?.username || blog.author?.name || 'Unknown'}</span>
                                         <span>{new Date(blog.createdAt).toLocaleDateString()}</span>
                                     </div>
                                 </div>

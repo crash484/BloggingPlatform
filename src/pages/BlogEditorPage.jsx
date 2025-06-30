@@ -21,8 +21,18 @@ export default function BlogEditorPage() {
 
     const [formData, setFormData] = useState({
         title: '',
-        content: ''
+        content: '',
+        categories: []
     });
+
+    const [newCategory, setNewCategory] = useState('');
+
+    // Predefined categories
+    const predefinedCategories = [
+        'Technology', 'Travel', 'Food', 'Health', 'Fitness',
+        'Education', 'Business', 'Entertainment', 'Sports',
+        'Politics', 'Science', 'Art', 'Music', 'Books', 'Movies'
+    ];
 
     // Fetch blog data if editing
     useEffect(() => {
@@ -36,7 +46,8 @@ export default function BlogEditorPage() {
         if (currentBlog && isEditing) {
             setFormData({
                 title: currentBlog.title || '',
-                content: currentBlog.content || ''
+                content: currentBlog.content || '',
+                categories: currentBlog.categories || []
             });
         }
     }, [currentBlog, isEditing]);
@@ -74,6 +85,32 @@ export default function BlogEditorPage() {
         }));
     };
 
+    const handleAddCategory = () => {
+        if (newCategory.trim() && !formData.categories.includes(newCategory.trim())) {
+            setFormData(prev => ({
+                ...prev,
+                categories: [...prev.categories, newCategory.trim()]
+            }));
+            setNewCategory('');
+        }
+    };
+
+    const handleRemoveCategory = (categoryToRemove) => {
+        setFormData(prev => ({
+            ...prev,
+            categories: prev.categories.filter(cat => cat !== categoryToRemove)
+        }));
+    };
+
+    const handlePredefinedCategoryClick = (category) => {
+        if (!formData.categories.includes(category)) {
+            setFormData(prev => ({
+                ...prev,
+                categories: [...prev.categories, category]
+            }));
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -103,6 +140,10 @@ export default function BlogEditorPage() {
 
     const handleCancel = () => {
         navigate('/blogs');
+    };
+
+    const handleBackToDashboard = () => {
+        navigate('/dashboard');
     };
 
     // Quill editor modules and formats
@@ -148,6 +189,16 @@ export default function BlogEditorPage() {
             <div className="max-w-4xl mx-auto px-4">
                 {/* Header */}
                 <div className="mb-8 text-center">
+                    <div className="flex justify-between items-center mb-4">
+                        <button
+                            onClick={handleBackToDashboard}
+                            className="bg-gradient-to-r from-gray-600 to-gray-700 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:scale-105 transition-transform flex items-center gap-2"
+                        >
+                            <span className="text-xl">🏠</span>
+                            Back to Dashboard
+                        </button>
+                        <div></div> {/* Spacer for centering */}
+                    </div>
                     <h1 className="text-4xl font-bold text-white mb-2">
                         {isEditing ? 'Edit Blog Post' : 'Create New Blog Post'}
                     </h1>
@@ -174,6 +225,82 @@ export default function BlogEditorPage() {
                                 className="w-full px-4 py-3 rounded-xl bg-white/30 text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
                                 disabled={isCreating || isUpdating}
                             />
+                        </div>
+
+                        {/* Categories Section */}
+                        <div>
+                            <label className="block text-white font-semibold mb-2">
+                                Categories
+                            </label>
+
+                            {/* Current Categories */}
+                            {formData.categories.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mb-4">
+                                    {formData.categories.map((category, index) => (
+                                        <span
+                                            key={index}
+                                            className="px-3 py-1 bg-purple-500/50 text-white rounded-lg flex items-center gap-2"
+                                        >
+                                            {category}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveCategory(category)}
+                                                className="text-white hover:text-red-300 transition-colors"
+                                                disabled={isCreating || isUpdating}
+                                            >
+                                                ×
+                                            </button>
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Add New Category */}
+                            <div className="flex gap-2 mb-4">
+                                <input
+                                    type="text"
+                                    value={newCategory}
+                                    onChange={(e) => setNewCategory(e.target.value)}
+                                    placeholder="Add a new category..."
+                                    className="flex-1 px-4 py-2 rounded-xl bg-white/30 text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+                                    disabled={isCreating || isUpdating}
+                                    onKeyPress={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            handleAddCategory();
+                                        }
+                                    }}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleAddCategory}
+                                    disabled={isCreating || isUpdating || !newCategory.trim()}
+                                    className="px-4 py-2 bg-purple-500 text-white rounded-xl hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    Add
+                                </button>
+                            </div>
+
+                            {/* Predefined Categories */}
+                            <div>
+                                <p className="text-purple-200 text-sm mb-2">Quick add categories:</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {predefinedCategories.map((category) => (
+                                        <button
+                                            key={category}
+                                            type="button"
+                                            onClick={() => handlePredefinedCategoryClick(category)}
+                                            disabled={isCreating || isUpdating || formData.categories.includes(category)}
+                                            className={`px-3 py-1 rounded-lg text-sm transition-colors ${formData.categories.includes(category)
+                                                ? 'bg-purple-500/50 text-white cursor-not-allowed'
+                                                : 'bg-white/20 text-white hover:bg-white/30'
+                                                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                        >
+                                            {category}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
 
                         {/* Content Editor */}

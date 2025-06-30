@@ -97,6 +97,49 @@ export const deleteBlog = createAsyncThunk(
     }
 )
 
+// New async thunks for likes and comments
+export const toggleLike = createAsyncThunk(
+    'blog/toggleLike',
+    async (blogId, { rejectWithValue, getState }) => {
+        try {
+            const { token } = getState().auth
+            const response = await fetch(`http://localhost:5000/api/auth/blogs/${blogId}/like`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            const data = await response.json()
+            if (!response.ok) throw new Error(data.message)
+            return { blogId, data }
+        } catch (error) {
+            return rejectWithValue(error.message)
+        }
+    }
+)
+
+export const addComment = createAsyncThunk(
+    'blog/addComment',
+    async ({ blogId, commentText }, { rejectWithValue, getState }) => {
+        try {
+            const { token } = getState().auth
+            const response = await fetch(`http://localhost:5000/api/auth/blogs/${blogId}/comments`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ text: commentText })
+            })
+            const data = await response.json()
+            if (!response.ok) throw new Error(data.message)
+            return { blogId, comment: data }
+        } catch (error) {
+            return rejectWithValue(error.message)
+        }
+    }
+)
+
 const initialState = {
     blogs: [],
     currentBlog: null,
@@ -104,7 +147,9 @@ const initialState = {
     error: null,
     isCreating: false,
     isUpdating: false,
-    isDeleting: false
+    isDeleting: false,
+    isLiking: false,
+    isCommenting: false
 }
 
 const blogSlice = createSlice({
@@ -198,18 +243,69 @@ const blogSlice = createSlice({
                 state.isDeleting = false
                 state.error = action.payload
             })
+            // Toggle like
+            .addCase(toggleLike.pending, (state) => {
+                state.isLiking = true
+                state.error = null
+            })
+            .addCase(toggleLike.fulfilled, (state, action) => {
+                state.isLiking = false
+                const { blogId, data } = action.payload
+
+                // Update in blogs array
+                const blogIndex = state.blogs.findIndex(blog => blog._id === blogId)
+                if (blogIndex !== -1) {
+                    state.blogs[blogIndex] = data
+                }
+
+                // Update current blog if it's the same
+                if (state.currentBlog && state.currentBlog._id === blogId) {
+                    state.currentBlog = data
+                }
+            })
+            .addCase(toggleLike.rejected, (state, action) => {
+                state.isLiking = false
+                state.error = action.payload
+            })
+            // Add comment
+            .addCase(addComment.pending, (state) => {
+                state.isCommenting = true
+                state.error = null
+            })
+            .addCase(addComment.fulfilled, (state, action) => {
+                state.isCommenting = false
+                const { blogId, comment } = action.payload
+
+                // Update in blogs array
+                const blogIndex = state.blogs.findIndex(blog => blog._id === blogId)
+                if (blogIndex !== -1) {
+                    state.blogs[blogIndex].comments = state.blogs[blogIndex].comments || []
+                    state.blogs[blogIndex].comments.push(comment)
+                }
+
+                // Update current blog if it's the same
+                if (state.currentBlog && state.currentBlog._id === blogId) {
+                    state.currentBlog.comments = state.currentBlog.comments || []
+                    state.currentBlog.comments.push(comment)
+                }
+            })
+            .addCase(addComment.rejected, (state, action) => {
+                state.isCommenting = false
+                state.error = action.payload
+            })
     }
 })
 
 export const { clearCurrentBlog, clearError, clearBlogs } = blogSlice.actions
 
-export default blogSlice.reducer
-
-// Selectors
 export const selectAllBlogs = (state) => state.blog.blogs
 export const selectCurrentBlog = (state) => state.blog.currentBlog
 export const selectBlogLoading = (state) => state.blog.isLoading
 export const selectBlogError = (state) => state.blog.error
 export const selectIsCreating = (state) => state.blog.isCreating
 export const selectIsUpdating = (state) => state.blog.isUpdating
-export const selectIsDeleting = (state) => state.blog.isDeleting 
+export const selectIsDeleting = (state) => state.blog.isDeleting
+export const selectIsLiking = (state) => state.blog.isLiking
+export const selectIsCommenting = (state) => state.blog.isCommenting
+
+export default blogSlice.reducer 

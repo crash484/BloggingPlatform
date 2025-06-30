@@ -10,6 +10,7 @@ import DashboardPage from './pages/DashboardPage';
 import BlogListPage from './pages/BlogListPage';
 import BlogEditorPage from './pages/BlogEditorPage';
 import BlogDetailsPage from './pages/BlogDetailsPage';
+import UserProfilePage from './pages/UserProfilePage';
 import Navigation from './components/Navigation';
 import './App.css';
 
@@ -60,6 +61,7 @@ function App() {
           <Route path="/blogs/create" element={<BlogEditorPage />} />
           <Route path="/blogs/edit/:blogId" element={<BlogEditorPage />} />
           <Route path="/blogs/:blogId" element={<BlogDetailsPage />} />
+          <Route path="/profile/:userId" element={<UserProfilePage />} />
         </Routes>
       </div>
     </Router>
