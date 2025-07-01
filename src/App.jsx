@@ -12,6 +12,8 @@ import BlogEditorPage from './pages/BlogEditorPage';
 import BlogDetailsPage from './pages/BlogDetailsPage';
 import UserProfilePage from './pages/UserProfilePage';
 import Navigation from './components/Navigation';
+import AdminDashboardPage from './pages/AdminDashboardPage';
+import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
 function App() {
@@ -62,6 +64,11 @@ function App() {
           <Route path="/blogs/edit/:blogId" element={<BlogEditorPage />} />
           <Route path="/blogs/:blogId" element={<BlogDetailsPage />} />
           <Route path="/profile/:userId" element={<UserProfilePage />} />
+          <Route path="/admin" element={
+            <ProtectedRoute requiredRole="admin">
+              <AdminDashboardPage />
+            </ProtectedRoute>
+          } />
         </Routes>
       </div>
     </Router>

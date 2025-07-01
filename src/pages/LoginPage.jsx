@@ -51,18 +51,18 @@ export default function LoginPage() {
       if (response.ok) {
         toast.success("Login successful!");
         console.log("Login response data:", data); // Debug log
-        
+
         const userPayload = {
           user: { _id: data.user._id, name: data.user.name, email: data.user.email },
           token: data.token
         };
-        
+
         console.log("Setting credentials with:", userPayload); // Debug log
-        
+
         // Save to localStorage for persistence
         localStorage.setItem('authUser', JSON.stringify(userPayload.user));
         localStorage.setItem('authToken', userPayload.token);
-        
+
         dispatch(setCredentials(userPayload));
         navigate('/dashboard');
       } else {
