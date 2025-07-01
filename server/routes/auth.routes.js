@@ -214,8 +214,91 @@ router.delete("/blogs/:id",verifyToken,async(req,res)=>{
 })
 
 //route for when comment is added push to the blogmodel too
-// router.put("/comment")
+router.post("/blogs/:id/comments",verifyToken, async (req,res)=>{
+    try {
+        const { id: blogId } = req.params; // Get blogId from URL params
+        const userId = req.user.id;
+        const { text } = req.body;
+
+        if( !text || !text.trim() ) {
+            return res.status(400).json({message: "Comment content is required"});
+        }
+
+        // Check if blog exists
+        const blog = await Blog.findById(blogId);
+        if (!blog) {
+            return res.status(404).json({ message: "Blog not found" });
+        }
+
+        // Create new comment
+        const newComment = new Comment({
+            text: text.trim(),
+            user: userId,
+            blog: blogId
+        });
+
+        // Save the comment
+        const savedComment = await newComment.save();
+
+        // Add comment ID to the blog's comments array
+        await Blog.findByIdAndUpdate(blogId, {
+            $push: { comments: savedComment._id }
+        });
+
+        // Populate author data for response
+        const populatedComment = await Comment.findById(savedComment._id)
+            .populate('user', 'username email');
+
+        return res.status(201).json(populatedComment);
+
+    } catch(err) {
+        console.log("Error creating comment:", err.message);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+})
 
 //route for when like is added push it to the blogmodel too
-// router.put("/like")
+router.post("/blogs/:id/like", verifyToken, async (req, res) => {
+    try {
+        const { id: blogId } = req.params;
+        const userId = req.user.id;
+
+        // Check if blog exists
+        const blog = await Blog.findById(blogId);
+        if (!blog) {
+            return res.status(404).json({ message: "Blog not found" });
+        }
+
+        // Check if user already liked this blog
+        const hasLiked = blog.likes && blog.likes.includes(userId);
+
+        let updatedBlog;
+        let message;
+
+        if (hasLiked) {
+            // Unlike: Remove user from likes array
+            updatedBlog = await Blog.findByIdAndUpdate(
+                blogId,
+                { $pull: { likes: userId } },
+                { new: true }
+            ).populate('author', 'username email');
+            message = "Blog unliked successfully";
+        } else {
+            // Like: Add user to likes array
+            updatedBlog = await Blog.findByIdAndUpdate(
+                blogId,
+                { $addToSet: { likes: userId } }, // $addToSet prevents duplicates
+                { new: true }
+            ).populate('author', 'username email');
+            message = "Blog liked successfully";
+        }
+
+        return res.status(200).json(updatedBlog);
+
+    } catch(err) {
+        console.log("Error toggling like:", err.message);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+})
+
 export default router;

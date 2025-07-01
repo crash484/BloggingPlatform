@@ -255,6 +255,7 @@ const blogSlice = createSlice({
                 // Update in blogs array
                 const blogIndex = state.blogs.findIndex(blog => blog._id === blogId)
                 if (blogIndex !== -1) {
+                    // Update the entire blog with the new data from server
                     state.blogs[blogIndex] = data
                 }
 
