@@ -9,7 +9,10 @@ const blogSchema = new mongoose.Schema({
     type: String, // Rich text stored as HTML from Quill
     required: true
   },
-  imageUrl: String,
+  imageUrl: {
+    type: String,
+    default: null
+  },
   author: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

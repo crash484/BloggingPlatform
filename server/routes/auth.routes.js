@@ -5,6 +5,7 @@ import jwt  from "jsonwebtoken";
 import User from "../models/UserModel.js";
 import { verifyToken } from "../middleware/auth.middleware.js";
 import Blog from "../models/BlogModel.js"
+import Comment from "../models/CommentModel.js"
 
 const router = express.Router();
 dotenv.config();
@@ -212,4 +213,9 @@ router.delete("/blogs/:id",verifyToken,async(req,res)=>{
     }
 })
 
+//route for when comment is added push to the blogmodel too
+// router.put("/comment")
+
+//route for when like is added push it to the blogmodel too
+// router.put("/like")
 export default router;

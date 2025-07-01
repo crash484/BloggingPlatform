@@ -2,7 +2,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useDispatch } from 'react-redux';
 import { useEffect } from 'react';
-import { setCredentials } from './store/authSlice';
+import { setCredentials, clearSession } from './store/authSlice';
+import { isTokenExpired, setupSessionCleanup } from './utils/auth';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -19,14 +20,28 @@ import './App.css';
 function App() {
   const dispatch = useDispatch();
 
-  // Rehydrate Redux state from localStorage on app load
+  // Rehydrate Redux state from localStorage on app load with validation
   useEffect(() => {
     const user = localStorage.getItem('authUser');
     const token = localStorage.getItem('authToken');
+    
     if (user && token) {
-      dispatch(setCredentials({ user: JSON.parse(user), token }));
+      // Check if token is expired
+      if (isTokenExpired(token)) {
+        // Token is expired, clear session
+        dispatch(clearSession());
+      } else {
+        // Token is valid, restore session
+        dispatch(setCredentials({ user: JSON.parse(user), token }));
+      }
     }
   }, [dispatch]);
+
+  // Setup session cleanup on app mount
+  useEffect(() => {
+    const cleanup = setupSessionCleanup();
+    return cleanup;
+  }, []);
 
   return (
     <Router>
