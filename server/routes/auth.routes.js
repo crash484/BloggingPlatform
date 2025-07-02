@@ -117,10 +117,10 @@ router.post("/blogs",verifyToken, async (req,res)=>{
     try{
         //get user id and then create a blog object and add the user id to it
         const userId = req.user.id; //this will get user id
-        const { title, content } = req.body; // Extract title and content directly from req.body
+        const { title, content, image } = req.body; // Extract title and content directly from req.body
         
         console.log("User ID:", userId);
-        console.log("Blog data:", { title, content });
+        console.log("Blog data:", { title, content, image });
         
         if (!title || !content) {
             return res.status(400).json({ message: "Title and content are required" });
@@ -130,6 +130,7 @@ router.post("/blogs",verifyToken, async (req,res)=>{
         const newBlog = new Blog({
             title,
             content,
+            imageUrl: image,
             author: userId,
             createdAt: new Date(),
             updatedAt: new Date()
