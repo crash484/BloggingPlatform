@@ -6,7 +6,6 @@ import 'react-quill/dist/quill.snow.css';
 import toast from 'react-hot-toast';
 import { createBlog, updateBlog, fetchBlogById, selectCurrentBlog, selectIsCreating, selectIsUpdating, selectBlogError, clearError } from '../store/blogSlice';
 import { selectCurrentUser } from '../store/authSlice';
-import ImageUpload from '../components/ImageUpload';
 
 export default function BlogEditorPage() {
     const dispatch = useDispatch();
@@ -24,7 +23,7 @@ export default function BlogEditorPage() {
         title: '',
         content: '',
         categories: [],
-        image: null
+        image: ''
     });
 
     const [newCategory, setNewCategory] = useState('');
@@ -50,7 +49,7 @@ export default function BlogEditorPage() {
                 title: currentBlog.title || '',
                 content: currentBlog.content || '',
                 categories: currentBlog.categories || [],
-                image: currentBlog.image || null
+                image: currentBlog.image || ''
             });
         }
     }, [currentBlog, isEditing]);
@@ -112,13 +111,6 @@ export default function BlogEditorPage() {
                 categories: [...prev.categories, category]
             }));
         }
-    };
-
-    const handleImageSelect = (file) => {
-        setFormData(prev => ({
-            ...prev,
-            image: file
-        }));
     };
 
     const handleSubmit = async (e) => {
@@ -220,16 +212,30 @@ export default function BlogEditorPage() {
                 {/* Editor Form */}
                 <div className="bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-8">
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* Blog Image Upload */}
+                        {/* Blog Image URL Input */}
                         <div>
                             <label className="block text-white font-semibold mb-2">
-                                Blog Image
+                                Blog Image URL
                             </label>
-                            <ImageUpload
-                                onImageSelect={handleImageSelect}
-                                currentImage={formData.image ? (typeof formData.image === 'string' ? formData.image : URL.createObjectURL(formData.image)) : null}
+                            <input
+                                type="url"
+                                name="image"
+                                value={formData.image}
+                                onChange={handleInputChange}
+                                placeholder="Paste image URL here..."
+                                className="w-full px-4 py-3 rounded-xl bg-white/30 text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
                                 disabled={isCreating || isUpdating}
                             />
+                            {formData.image && (
+                                <div className="mt-4 flex justify-center">
+                                    <img
+                                        src={formData.image}
+                                        alt="Blog Preview"
+                                        className="max-h-48 rounded-lg shadow-lg border border-white/20"
+                                        onError={e => e.target.style.display = 'none'}
+                                    />
+                                </div>
+                            )}
                         </div>
                         {/* Title Input */}
                         <div>
