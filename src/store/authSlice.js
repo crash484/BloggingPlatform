@@ -15,11 +15,23 @@ const authSlice = createSlice({
             const { user, token } = action.payload
             state.user = user
             state.token = token
+            // Save to localStorage when credentials are set
+            localStorage.setItem('authUser', JSON.stringify(user))
+            localStorage.setItem('authToken', token)
         },
         logout: (state) => {
             state.user = null
             state.token = null
             // Clear localStorage on logout
+            localStorage.removeItem('authUser')
+            localStorage.removeItem('authToken')
+        },
+        clearSession: (state) => {
+            // For session expiration or token invalidation
+            state.user = null
+            state.token = null
+            state.error = "Session expired. Please login again."
+            // Clear localStorage on session end
             localStorage.removeItem('authUser')
             localStorage.removeItem('authToken')
         },
@@ -35,7 +47,7 @@ const authSlice = createSlice({
     },
 })
 
-export const { setCredentials, logout, setLoading, setError, clearError } = authSlice.actions
+export const { setCredentials, logout, clearSession, setLoading, setError, clearError } = authSlice.actions
 
 export default authSlice.reducer
 
