@@ -225,6 +225,19 @@ export default function BlogDetailsPage() {
                             {currentBlog.title}
                         </h1>
 
+                        {/* Blog Image */}
+                        {currentBlog.imageUrl && (
+                            <div className="flex justify-center mb-6">
+                                <img
+                                    src={currentBlog.imageUrl}
+                                    alt="Blog"
+                                    className="max-h-80 rounded-xl shadow-lg border border-white/20 object-contain bg-white/10"
+                                    style={{ maxWidth: '100%' }}
+                                    onError={e => e.target.style.display = 'none'}
+                                />
+                            </div>
+                        )}
+
                         {/* Author and Date Info */}
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
@@ -250,8 +263,8 @@ export default function BlogDetailsPage() {
                                     onClick={handleLike}
                                     disabled={isLiking}
                                     className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold transition-all ${isLikedByUser()
-                                            ? 'bg-red-500 text-white hover:bg-red-600'
-                                            : 'bg-white/20 text-white hover:bg-white/30'
+                                        ? 'bg-red-500 text-white hover:bg-red-600'
+                                        : 'bg-white/20 text-white hover:bg-white/30'
                                         } disabled:opacity-50 disabled:cursor-not-allowed`}
                                 >
                                     <span className="text-xl">
