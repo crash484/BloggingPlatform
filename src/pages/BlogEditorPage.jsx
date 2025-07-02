@@ -49,7 +49,7 @@ export default function BlogEditorPage() {
                 title: currentBlog.title || '',
                 content: currentBlog.content || '',
                 categories: currentBlog.categories || [],
-                image: currentBlog.image || ''
+                image: currentBlog.imageUrl || ''
             });
         }
     }, [currentBlog, isEditing]);

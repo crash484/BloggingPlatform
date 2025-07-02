@@ -296,6 +296,21 @@ export default function BlogListPage() {
                                 key={blog._id}
                                 className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 overflow-hidden hover:scale-105 transition-transform duration-300"
                             >
+                                {/* Blog Image */}
+                                {blog.imageUrl && (
+                                    <div className="h-48 w-full overflow-hidden bg-gray-800/50">
+                                        <img
+                                            src={blog.imageUrl}
+                                            alt={blog.title}
+                                            className="w-full h-48 object-cover transition-transform hover:scale-110"
+                                            style={{ minHeight: '12rem', maxHeight: '12rem' }}
+                                            onError={(e) => {
+                                                e.target.style.display = 'none';
+                                            }}
+                                        />
+                                    </div>
+                                )}
+
                                 {/* Blog Content */}
                                 <div className="p-6">
                                     <h3 className="text-xl font-bold text-white mb-3 line-clamp-2">
