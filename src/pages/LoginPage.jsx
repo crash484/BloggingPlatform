@@ -51,7 +51,12 @@ export default function LoginPage() {
         console.log("Login response data:", data); // Debug log
         
         const userPayload = {
-          user: { _id: data.user._id, name: data.user.name, email: data.user.email },
+          user: { 
+            _id: data.user._id, 
+            name: data.user.name, 
+            email: data.user.email,
+            role: data.user.role 
+          },
           token: data.token
         };
         

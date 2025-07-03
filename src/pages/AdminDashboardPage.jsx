@@ -11,32 +11,44 @@ export default function AdminDashboardPage() {
 
     const [activeTab, setActiveTab] = useState('overview');
     const [users, setUsers] = useState([]);
-    const [blogs, setBlogs] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [showPostDetails, setShowPostDetails] = useState(false);
 
-    // Mock data for demonstration (in real app, this would come from API)
+    // Fetch real user data from the API
     useEffect(() => {
-        // Simulate loading data
-        setIsLoading(true);
-        setTimeout(() => {
-            setUsers([
-                { _id: '1', username: 'john_doe', email: 'john@example.com', role: 'user', createdAt: '2024-01-15', status: 'active' },
-                { _id: '2', username: 'jane_smith', email: 'jane@example.com', role: 'moderator', createdAt: '2024-01-10', status: 'active' },
-                { _id: '3', username: 'admin_user', email: 'admin@example.com', role: 'admin', createdAt: '2024-01-01', status: 'active' },
-                { _id: '4', username: 'bob_wilson', email: 'bob@example.com', role: 'user', createdAt: '2024-01-20', status: 'suspended' },
-            ]);
-            setBlogs([
-                { _id: '1', title: 'Getting Started with React', author: 'john_doe', status: 'published', createdAt: '2024-01-15', views: 150 },
-                { _id: '2', title: 'Advanced JavaScript Tips', author: 'jane_smith', status: 'published', createdAt: '2024-01-12', views: 89 },
-                { _id: '3', title: 'Draft: CSS Best Practices', author: 'bob_wilson', status: 'draft', createdAt: '2024-01-18', views: 0 },
-                { _id: '4', title: 'Web Development Trends', author: 'admin_user', status: 'published', createdAt: '2024-01-05', views: 234 },
-            ]);
-            setIsLoading(false);
-        }, 1000);
+        fetchUserStatistics();
     }, []);
 
+    const fetchUserStatistics = async () => {
+        setIsLoading(true);
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await fetch('http://localhost:5000/api/auth/admin', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+            
+            if (response.ok) {
+                setUsers(data.users);
+            } else {
+                toast.error(data.message || 'Failed to fetch user statistics');
+            }
+        } catch (err) {
+            toast.error('Network error. Please check your connection.');
+            console.error('Error fetching user statistics:', err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const handleUserAction = (userId, action) => {
-        // Mock user actions
+        // Mock user actions for now
         if (action === 'suspend') {
             setUsers(prev => prev.map(user =>
                 user._id === userId ? { ...user, status: 'suspended' } : user
@@ -53,37 +65,9 @@ export default function AdminDashboardPage() {
         }
     };
 
-    const handleBlogAction = (blogId, action) => {
-        // Mock blog actions
-        if (action === 'approve') {
-            setBlogs(prev => prev.map(blog =>
-                blog._id === blogId ? { ...blog, status: 'published' } : blog
-            ));
-            toast.success('Blog approved successfully');
-        } else if (action === 'reject') {
-            setBlogs(prev => prev.map(blog =>
-                blog._id === blogId ? { ...blog, status: 'rejected' } : blog
-            ));
-            toast.success('Blog rejected successfully');
-        } else if (action === 'delete') {
-            setBlogs(prev => prev.filter(blog => blog._id !== blogId));
-            toast.success('Blog deleted successfully');
-        }
-    };
-
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'active':
-            case 'published':
-                return 'bg-green-100 text-green-800';
-            case 'suspended':
-            case 'draft':
-                return 'bg-yellow-100 text-yellow-800';
-            case 'rejected':
-                return 'bg-red-100 text-red-800';
-            default:
-                return 'bg-gray-100 text-gray-800';
-        }
+    const handleShowPostDetails = (user) => {
+        setSelectedUser(user);
+        setShowPostDetails(true);
     };
 
     const getRoleColor = (role) => {
@@ -99,15 +83,43 @@ export default function AdminDashboardPage() {
         }
     };
 
-    if (!currentUser || currentUser.role !== 'admin') {
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    };
+
+    if (!currentUser) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-900 via-purple-900 to-indigo-900">
                 <div className="text-white text-center">
                     <h2 className="text-2xl font-bold mb-4">Access Denied</h2>
-                    <p className="mb-4">You don't have permission to access this page.</p>
+                    <p className="mb-4">Please login to access this page.</p>
+                    <button
+                        onClick={() => navigate('/login')}
+                        className="bg-gradient-to-r from-pink-500 to-indigo-500 px-6 py-2 rounded-lg hover:scale-105 transition-transform"
+                    >
+                        Go to Login
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (currentUser.role !== 'admin') {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-900 via-purple-900 to-indigo-900">
+                <div className="text-white text-center">
+                    <h2 className="text-2xl font-bold mb-4">Access Denied</h2>
+                    <p className="mb-4">You don't have admin privileges.</p>
+                    <p className="mb-4 text-purple-200">Current role: {currentUser.role || 'user'}</p>
+                    
                     <button
                         onClick={() => navigate('/dashboard')}
-                        className="bg-gradient-to-r from-pink-500 to-indigo-500 px-6 py-2 rounded-lg hover:scale-105 transition-transform"
+                        className="bg-gradient-to-r from-gray-500 to-gray-600 px-6 py-2 rounded-lg hover:scale-105 transition-transform"
                     >
                         Back to Dashboard
                     </button>
@@ -115,6 +127,11 @@ export default function AdminDashboardPage() {
             </div>
         );
     }
+
+    // Calculate total statistics
+    const totalPosts = users.reduce((sum, user) => sum + user.statistics.totalPosts, 0);
+    const totalLikes = users.reduce((sum, user) => sum + user.statistics.totalLikes, 0);
+    const totalComments = users.reduce((sum, user) => sum + user.statistics.totalComments, 0);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-pink-900 via-purple-900 to-indigo-900 py-8">
@@ -129,10 +146,16 @@ export default function AdminDashboardPage() {
                             <span className="text-xl">🏠</span>
                             Back to Dashboard
                         </button>
-                        <div></div>
+                        <button
+                            onClick={fetchUserStatistics}
+                            className="bg-gradient-to-r from-blue-500 to-purple-500 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:scale-105 transition-transform flex items-center gap-2"
+                        >
+                            <span className="text-xl">🔄</span>
+                            Refresh Data
+                        </button>
                     </div>
                     <h1 className="text-4xl font-bold text-white mb-2">Admin Dashboard</h1>
-                    <p className="text-purple-200">Manage users and content</p>
+                    <p className="text-purple-200">Manage users and monitor platform activity</p>
                 </div>
 
                 {/* Stats Cards */}
@@ -142,27 +165,23 @@ export default function AdminDashboardPage() {
                         <div className="text-purple-200">Total Users</div>
                     </div>
                     <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 text-center">
-                        <div className="text-3xl font-bold text-white">{blogs.length}</div>
-                        <div className="text-purple-200">Total Blogs</div>
+                        <div className="text-3xl font-bold text-white">{totalPosts}</div>
+                        <div className="text-purple-200">Total Posts</div>
                     </div>
                     <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 text-center">
-                        <div className="text-3xl font-bold text-white">
-                            {blogs.filter(blog => blog.status === 'published').length}
-                        </div>
-                        <div className="text-purple-200">Published Blogs</div>
+                        <div className="text-3xl font-bold text-white">{totalLikes}</div>
+                        <div className="text-purple-200">Total Likes</div>
                     </div>
                     <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 text-center">
-                        <div className="text-3xl font-bold text-white">
-                            {blogs.filter(blog => blog.status === 'draft').length}
-                        </div>
-                        <div className="text-purple-200">Draft Blogs</div>
+                        <div className="text-3xl font-bold text-white">{totalComments}</div>
+                        <div className="text-purple-200">Total Comments</div>
                     </div>
                 </div>
 
-                {/* Tabs */}
+                {/* Main Content */}
                 <div className="bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-8">
                     <div className="flex space-x-1 mb-6 bg-white/10 rounded-lg p-1">
-                        {['overview', 'users', 'blogs'].map((tab) => (
+                        {['overview', 'users', 'statistics'].map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
@@ -176,44 +195,35 @@ export default function AdminDashboardPage() {
                         ))}
                     </div>
 
-                    {/* Tab Content */}
+                    {/* Loading State */}
                     {isLoading ? (
                         <div className="text-center py-8">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
-                            <p className="text-white mt-4">Loading...</p>
+                            <p className="text-white mt-4">Loading user statistics...</p>
                         </div>
                     ) : (
                         <div>
+                            {/* Overview Tab */}
                             {activeTab === 'overview' && (
                                 <div className="space-y-6">
                                     <div>
-                                        <h3 className="text-xl font-bold text-white mb-4">Recent Users</h3>
+                                        <h3 className="text-xl font-bold text-white mb-4">Top Contributors</h3>
                                         <div className="bg-white/5 rounded-lg p-4">
-                                            {users.slice(0, 3).map((user) => (
-                                                <div key={user._id} className="flex items-center justify-between py-2">
-                                                    <div>
-                                                        <div className="text-white font-medium">{user.username}</div>
-                                                        <div className="text-purple-200 text-sm">{user.email}</div>
+                                            {users.slice(0, 5).map((user) => (
+                                                <div key={user._id} className="flex items-center justify-between py-3 border-b border-white/10 last:border-b-0">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 bg-gradient-to-r from-pink-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold">
+                                                            {user.username?.charAt(0).toUpperCase() || 'U'}
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-white font-medium">{user.username}</div>
+                                                            <div className="text-purple-200 text-sm">{user.email}</div>
+                                                        </div>
                                                     </div>
-                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
-                                                        {user.role}
-                                                    </span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <h3 className="text-xl font-bold text-white mb-4">Recent Blogs</h3>
-                                        <div className="bg-white/5 rounded-lg p-4">
-                                            {blogs.slice(0, 3).map((blog) => (
-                                                <div key={blog._id} className="flex items-center justify-between py-2">
-                                                    <div>
-                                                        <div className="text-white font-medium">{blog.title}</div>
-                                                        <div className="text-purple-200 text-sm">by {blog.author}</div>
+                                                    <div className="text-right">
+                                                        <div className="text-white font-semibold">{user.statistics.totalPosts} posts</div>
+                                                        <div className="text-purple-200 text-sm">{user.statistics.totalLikes} likes</div>
                                                     </div>
-                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(blog.status)}`}>
-                                                        {blog.status}
-                                                    </span>
                                                 </div>
                                             ))}
                                         </div>
@@ -221,6 +231,7 @@ export default function AdminDashboardPage() {
                                 </div>
                             )}
 
+                            {/* Users Tab */}
                             {activeTab === 'users' && (
                                 <div>
                                     <h3 className="text-xl font-bold text-white mb-4">User Management</h3>
@@ -230,7 +241,8 @@ export default function AdminDashboardPage() {
                                                 <tr className="border-b border-white/20">
                                                     <th className="py-3 px-4 text-white font-medium">User</th>
                                                     <th className="py-3 px-4 text-white font-medium">Role</th>
-                                                    <th className="py-3 px-4 text-white font-medium">Status</th>
+                                                    <th className="py-3 px-4 text-white font-medium">Posts</th>
+                                                    <th className="py-3 px-4 text-white font-medium">Engagement</th>
                                                     <th className="py-3 px-4 text-white font-medium">Joined</th>
                                                     <th className="py-3 px-4 text-white font-medium">Actions</th>
                                                 </tr>
@@ -239,9 +251,14 @@ export default function AdminDashboardPage() {
                                                 {users.map((user) => (
                                                     <tr key={user._id} className="border-b border-white/10">
                                                         <td className="py-3 px-4">
-                                                            <div>
-                                                                <div className="text-white font-medium">{user.username}</div>
-                                                                <div className="text-purple-200 text-sm">{user.email}</div>
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                                                    {user.username?.charAt(0).toUpperCase() || 'U'}
+                                                                </div>
+                                                                <div>
+                                                                    <div className="text-white font-medium">{user.username}</div>
+                                                                    <div className="text-purple-200 text-sm">{user.email}</div>
+                                                                </div>
                                                             </div>
                                                         </td>
                                                         <td className="py-3 px-4">
@@ -249,36 +266,31 @@ export default function AdminDashboardPage() {
                                                                 {user.role}
                                                             </span>
                                                         </td>
+                                                        <td className="py-3 px-4 text-white">
+                                                            {user.statistics.totalPosts}
+                                                        </td>
                                                         <td className="py-3 px-4">
-                                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}>
-                                                                {user.status}
-                                                            </span>
+                                                            <div className="text-white text-sm">
+                                                                <div>❤️ {user.statistics.totalLikes}</div>
+                                                                <div>💬 {user.statistics.totalComments}</div>
+                                                            </div>
                                                         </td>
                                                         <td className="py-3 px-4 text-purple-200">
-                                                            {new Date(user.createdAt).toLocaleDateString()}
+                                                            {formatDate(user.createdAt)}
                                                         </td>
                                                         <td className="py-3 px-4">
                                                             <div className="flex space-x-2">
-                                                                {user.status === 'active' ? (
-                                                                    <button
-                                                                        onClick={() => handleUserAction(user._id, 'suspend')}
-                                                                        className="px-3 py-1 bg-yellow-500 text-white rounded text-xs hover:bg-yellow-600"
-                                                                    >
-                                                                        Suspend
-                                                                    </button>
-                                                                ) : (
-                                                                    <button
-                                                                        onClick={() => handleUserAction(user._id, 'activate')}
-                                                                        className="px-3 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
-                                                                    >
-                                                                        Activate
-                                                                    </button>
-                                                                )}
                                                                 <button
-                                                                    onClick={() => handleUserAction(user._id, 'delete')}
-                                                                    className="px-3 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600"
+                                                                    onClick={() => handleShowPostDetails(user)}
+                                                                    className="px-3 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
                                                                 >
-                                                                    Delete
+                                                                    View Posts
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleUserAction(user._id, 'suspend')}
+                                                                    className="px-3 py-1 bg-yellow-500 text-white rounded text-xs hover:bg-yellow-600"
+                                                                >
+                                                                    Suspend
                                                                 </button>
                                                             </div>
                                                         </td>
@@ -290,73 +302,101 @@ export default function AdminDashboardPage() {
                                 </div>
                             )}
 
-                            {activeTab === 'blogs' && (
-                                <div>
-                                    <h3 className="text-xl font-bold text-white mb-4">Blog Management</h3>
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-left">
-                                            <thead>
-                                                <tr className="border-b border-white/20">
-                                                    <th className="py-3 px-4 text-white font-medium">Title</th>
-                                                    <th className="py-3 px-4 text-white font-medium">Author</th>
-                                                    <th className="py-3 px-4 text-white font-medium">Status</th>
-                                                    <th className="py-3 px-4 text-white font-medium">Views</th>
-                                                    <th className="py-3 px-4 text-white font-medium">Created</th>
-                                                    <th className="py-3 px-4 text-white font-medium">Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {blogs.map((blog) => (
-                                                    <tr key={blog._id} className="border-b border-white/10">
-                                                        <td className="py-3 px-4">
-                                                            <div className="text-white font-medium">{blog.title}</div>
-                                                        </td>
-                                                        <td className="py-3 px-4 text-purple-200">{blog.author}</td>
-                                                        <td className="py-3 px-4">
-                                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(blog.status)}`}>
-                                                                {blog.status}
-                                                            </span>
-                                                        </td>
-                                                        <td className="py-3 px-4 text-purple-200">{blog.views}</td>
-                                                        <td className="py-3 px-4 text-purple-200">
-                                                            {new Date(blog.createdAt).toLocaleDateString()}
-                                                        </td>
-                                                        <td className="py-3 px-4">
-                                                            <div className="flex space-x-2">
-                                                                {blog.status === 'draft' && (
-                                                                    <button
-                                                                        onClick={() => handleBlogAction(blog._id, 'approve')}
-                                                                        className="px-3 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
-                                                                    >
-                                                                        Approve
-                                                                    </button>
-                                                                )}
-                                                                {blog.status === 'draft' && (
-                                                                    <button
-                                                                        onClick={() => handleBlogAction(blog._id, 'reject')}
-                                                                        className="px-3 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600"
-                                                                    >
-                                                                        Reject
-                                                                    </button>
-                                                                )}
-                                                                <button
-                                                                    onClick={() => handleBlogAction(blog._id, 'delete')}
-                                                                    className="px-3 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600"
-                                                                >
-                                                                    Delete
-                                                                </button>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
+                            {/* Statistics Tab */}
+                            {activeTab === 'statistics' && (
+                                <div className="space-y-6">
+                                    <h3 className="text-xl font-bold text-white mb-4">Platform Statistics</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="bg-white/5 rounded-lg p-6">
+                                            <h4 className="text-lg font-semibold text-white mb-4">Most Active Users</h4>
+                                            {users.slice(0, 3).map((user, index) => (
+                                                <div key={user._id} className="flex items-center justify-between py-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-white font-bold">#{index + 1}</span>
+                                                        <span className="text-purple-200">{user.username}</span>
+                                                    </div>
+                                                    <span className="text-white">{user.statistics.totalPosts} posts</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="bg-white/5 rounded-lg p-6">
+                                            <h4 className="text-lg font-semibold text-white mb-4">Most Liked Users</h4>
+                                            {users.sort((a, b) => b.statistics.totalLikes - a.statistics.totalLikes).slice(0, 3).map((user, index) => (
+                                                <div key={user._id} className="flex items-center justify-between py-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-white font-bold">#{index + 1}</span>
+                                                        <span className="text-purple-200">{user.username}</span>
+                                                    </div>
+                                                    <span className="text-white">{user.statistics.totalLikes} likes</span>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             )}
                         </div>
                     )}
                 </div>
+
+                {/* Post Details Modal */}
+                {showPostDetails && selectedUser && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className="bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 max-w-4xl w-full max-h-[80vh] overflow-hidden">
+                            <div className="p-6 border-b border-white/20">
+                                <div className="flex justify-between items-center">
+                                    <h3 className="text-2xl font-bold text-white">
+                                        {selectedUser.username}'s Posts ({selectedUser.statistics.totalPosts})
+                                    </h3>
+                                    <button
+                                        onClick={() => setShowPostDetails(false)}
+                                        className="text-white hover:text-red-400 text-2xl"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="p-6 overflow-y-auto max-h-[60vh]">
+                                {selectedUser.posts.length === 0 ? (
+                                    <div className="text-center text-purple-200 py-8">
+                                        <div className="text-4xl mb-4">📝</div>
+                                        <p>This user hasn't posted any blogs yet.</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {selectedUser.posts.map((post) => (
+                                            <div key={post._id} className="bg-white/5 rounded-lg p-4 border border-white/10">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <h4 className="text-lg font-semibold text-white">{post.title}</h4>
+                                                    <span className="text-purple-200 text-sm">{formatDate(post.createdAt)}</span>
+                                                </div>
+                                                <p className="text-purple-200 text-sm mb-3">{post.content}</p>
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-4 text-sm">
+                                                        <span className="text-purple-200">
+                                                            ❤️ {post.likesCount} likes
+                                                        </span>
+                                                        <span className="text-purple-200">
+                                                            💬 {post.commentsCount} comments
+                                                        </span>
+                                                    </div>
+                                                    {post.categories && post.categories.length > 0 && (
+                                                        <div className="flex gap-1">
+                                                            {post.categories.slice(0, 2).map((category, index) => (
+                                                                <span key={index} className="px-2 py-1 bg-purple-500/30 text-purple-200 text-xs rounded">
+                                                                    {category}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
