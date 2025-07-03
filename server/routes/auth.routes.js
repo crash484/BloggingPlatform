@@ -104,7 +104,6 @@ router.get("/blogs/:id",async(req,res)=>{
         if (!blog) {
             return res.status(404).json({ message: "Blog not found" });
         }
-        
         return res.status(200).json(blog);
     } catch(err) {
         console.log("Error fetching blog:", err.message);
@@ -117,10 +116,10 @@ router.post("/blogs",verifyToken, async (req,res)=>{
     try{
         //get user id and then create a blog object and add the user id to it
         const userId = req.user.id; //this will get user id
-        const { title, content, image } = req.body; // Extract title and content directly from req.body
+        const { title, content, image, categories } = req.body; // Extract title, content, image, and categories from req.body
         
         console.log("User ID:", userId);
-        console.log("Blog data:", { title, content, image });
+        console.log("Blog data:", { title, content, image, categories });
         
         if (!title || !content) {
             return res.status(400).json({ message: "Title and content are required" });
@@ -131,6 +130,7 @@ router.post("/blogs",verifyToken, async (req,res)=>{
             title,
             content,
             imageUrl: image,
+            categories: categories || [], // Default to empty array if no categories provided
             author: userId,
             createdAt: new Date(),
             updatedAt: new Date()
@@ -153,7 +153,7 @@ router.post("/blogs",verifyToken, async (req,res)=>{
 router.put("/blogs/:id",verifyToken, async( req,res)=>{
     try {
         const { id } = req.params;
-        const { title, content } = req.body;
+        const { title, content, image, categories } = req.body;
         const userId = req.user.id;
         
         if (!title || !content) {
@@ -171,10 +171,27 @@ router.put("/blogs/:id",verifyToken, async( req,res)=>{
             return res.status(403).json({ message: "You can only update your own blogs" });
         }
         
+        // Prepare update data
+        const updateData = {
+            title,
+            content,
+            updatedAt: new Date()
+        };
+        
+        // Add image if provided
+        if (image !== undefined) {
+            updateData.imageUrl = image;
+        }
+        
+        // Add categories if provided
+        if (categories !== undefined) {
+            updateData.categories = categories;
+        }
+        
         // Update the blog
         const updatedBlog = await Blog.findByIdAndUpdate(
             id,
-            { title, content, updatedAt: new Date() },
+            updateData,
             { new: true }
         ).populate('author', 'username email');
         

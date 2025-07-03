@@ -302,6 +302,27 @@ export default function BlogDetailsPage() {
                         </div>
                     </div>
 
+                    {/* Blog Image */}
+                    {currentBlog.imageUrl && (
+                        <div className="px-8 pb-6">
+                            <div className="rounded-2xl overflow-hidden shadow-lg bg-gray-800/50">
+                                <img
+                                    src={currentBlog.imageUrl}
+                                    alt={currentBlog.title}
+                                    className="w-full h-auto max-h-96 object-contain transition-transform hover:scale-105"
+                                    style={{ minHeight: '200px' }}
+                                    onError={(e) => {
+                                        e.target.style.display = 'none';
+                                        console.log('Failed to load image:', currentBlog.imageUrl);
+                                    }}
+                                    onLoad={(e) => {
+                                        console.log('Image loaded successfully:', currentBlog.imageUrl);
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    )}
+
                     {/* Blog Content */}
                     <div className="p-8">
                         <div
