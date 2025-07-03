@@ -47,16 +47,12 @@ export default function BlogListPage() {
         }
     }, [error, dispatch]);
 
-    // Get unique categories from blogs
-    const categories = useMemo(() => {
-        const categorySet = new Set();
-        blogs.forEach(blog => {
-            if (blog.categories && Array.isArray(blog.categories)) {
-                blog.categories.forEach(category => categorySet.add(category));
-            }
-        });
-        return Array.from(categorySet).sort();
-    }, [blogs]);
+    // Predefined categories (same as BlogEditorPage)
+    const predefinedCategories = [
+        'Technology', 'Travel', 'Food', 'Health', 'Fitness',
+        'Education', 'Business', 'Entertainment', 'Sports',
+        'Politics', 'Science', 'Art', 'Music', 'Books', 'Movies'
+    ];
 
     // Filter blogs based on search term and category
     const filteredBlogs = useMemo(() => {
@@ -240,7 +236,7 @@ export default function BlogListPage() {
                                 className="w-full px-4 py-3 rounded-xl bg-white/30 text-white focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
                             >
                                 <option value="all">All Categories</option>
-                                {categories.map(category => (
+                                {predefinedCategories.map(category => (
                                     <option key={category} value={category}>
                                         {category}
                                     </option>
@@ -373,8 +369,8 @@ export default function BlogListPage() {
                                             onClick={(e) => handleLike(blog._id, e)}
                                             disabled={isLiking}
                                             className={`px-3 py-2 rounded-lg font-semibold text-sm transition-all ${isLikedByUser(blog)
-                                                    ? 'bg-red-500 text-white hover:bg-red-600'
-                                                    : 'bg-white/20 text-white hover:bg-white/30'
+                                                ? 'bg-red-500 text-white hover:bg-red-600'
+                                                : 'bg-white/20 text-white hover:bg-white/30'
                                                 } disabled:opacity-50 disabled:cursor-not-allowed`}
                                             title={isLikedByUser(blog) ? 'Unlike' : 'Like'}
                                         >
