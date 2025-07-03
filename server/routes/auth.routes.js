@@ -51,7 +51,8 @@ router.post("/login", async (req,res)=>{
             const payload = {
                 id: user._id,
                 email: user.email,
-                username: user.username
+                username: user.username,
+                role: user.role
             };
 
             jwt.sign(payload, key, {expiresIn:'1h'}, (err, token) => {
@@ -65,7 +66,8 @@ router.post("/login", async (req,res)=>{
                     user: {
                         _id: user._id,
                         name: user.username,
-                        email: user.email
+                        email: user.email,
+                        role: user.role
                     },
                     message: "successfully logged in"
                 });
@@ -318,5 +320,124 @@ router.post("/blogs/:id/like", verifyToken, async (req, res) => {
         return res.status(500).json({ message: "Internal server error" });
     }
 })
+
+// Route to update user role (for admin management)
+router.put("/admin/users/:id/role", verifyToken, async (req, res) => {
+    try {
+        const { id: targetUserId } = req.params;
+        const { role } = req.body;
+        const currentUserId = req.user.id;
+
+        // Check if current user is admin
+        const currentUser = await User.findById(currentUserId);
+        if (!currentUser || currentUser.role !== 'admin') {
+            return res.status(403).json({ message: "Only admins can update user roles" });
+        }
+
+        // Validate role
+        if (!['user', 'admin'].includes(role)) {
+            return res.status(400).json({ message: "Invalid role. Must be 'user' or 'admin'" });
+        }
+
+        // Update user role
+        const updatedUser = await User.findByIdAndUpdate(
+            targetUserId,
+            { role },
+            { new: true }
+        ).select('-password');
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        return res.status(200).json({
+            message: `User role updated to ${role} successfully`,
+            user: updatedUser
+        });
+
+    } catch (err) {
+        console.log("Error updating user role:", err.message);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+// Route to get all users with their post statistics (admin only)
+router.get("/admin", verifyToken, async (req, res) => {
+    try {
+        const currentUserId = req.user.id;
+
+        // Check if current user is admin
+        const currentUser = await User.findById(currentUserId);
+        if (!currentUser || currentUser.role !== 'admin') {
+            return res.status(403).json({ message: "Only admins can access user statistics" });
+        }
+
+        // Get all users with their basic info
+        const users = await User.find({}).select('-password').sort({ createdAt: -1 });
+
+        // Get detailed statistics for each user
+        const userStatistics = await Promise.all(users.map(async (user) => {
+            // Get all blogs by this user with populated data
+            const userBlogs = await Blog.find({ author: user._id })
+                .populate('author', 'username email')
+                .populate({
+                    path: 'comments',
+                    populate: {
+                        path: 'user',
+                        select: 'username email'
+                    }
+                })
+                .sort({ createdAt: -1 });
+
+            // Calculate total likes and comments across all user's blogs
+            const totalLikes = userBlogs.reduce((sum, blog) => sum + (blog.likes?.length || 0), 0);
+            const totalComments = userBlogs.reduce((sum, blog) => sum + (blog.comments?.length || 0), 0);
+
+            // Format blog details with individual stats
+            const blogDetails = userBlogs.map(blog => ({
+                _id: blog._id,
+                title: blog.title,
+                content: blog.content.substring(0, 150) + (blog.content.length > 150 ? '...' : ''),
+                imageUrl: blog.imageUrl,
+                categories: blog.categories,
+                createdAt: blog.createdAt,
+                updatedAt: blog.updatedAt,
+                likesCount: blog.likes?.length || 0,
+                commentsCount: blog.comments?.length || 0,
+                comments: blog.comments || []
+            }));
+
+            return {
+                _id: user._id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+                bio: user.bio,
+                avatarUrl: user.avatarUrl,
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt,
+                statistics: {
+                    totalPosts: userBlogs.length,
+                    totalLikes: totalLikes,
+                    totalComments: totalComments
+                },
+                posts: blogDetails
+            };
+        }));
+
+        // Sort users by total posts (most active first)
+        userStatistics.sort((a, b) => b.statistics.totalPosts - a.statistics.totalPosts);
+
+        return res.status(200).json({
+            message: "User statistics retrieved successfully",
+            totalUsers: userStatistics.length,
+            users: userStatistics
+        });
+
+    } catch (err) {
+        console.log("Error fetching user statistics:", err.message);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
 
 export default router;
