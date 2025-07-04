@@ -46,22 +46,22 @@ export default function LoginPage() {
         }
       );
 
-      const data = await response.json();      if (response.ok) {
+      const data = await response.json(); if (response.ok) {
         toast.success("Login successful!");
         console.log("Login response data:", data); // Debug log
-        
+
         const userPayload = {
-          user: { 
-            _id: data.user._id, 
-            name: data.user.name, 
+          user: {
+            _id: data.user._id,
+            name: data.user.name,
             email: data.user.email,
-            role: data.user.role 
+            role: data.user.role
           },
           token: data.token
         };
-        
+
         console.log("Setting credentials with:", userPayload); // Debug log
-        
+
         // localStorage is now handled automatically in authSlice
         dispatch(setCredentials(userPayload));
         navigate('/dashboard');
@@ -76,6 +76,15 @@ export default function LoginPage() {
   }
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 relative overflow-hidden">
+      {/* Back Button */}
+      <button
+        onClick={() => navigate('/')}
+        className="absolute top-6 left-6 bg-gradient-to-r from-gray-600 to-gray-700 text-white font-bold px-4 py-2 rounded-xl shadow-lg hover:scale-105 transition-transform flex items-center gap-2 z-20"
+      >
+        <span className="text-lg">←</span>
+        Back to Home
+      </button>
+
       {/* Floating shapes */}
       <div className="absolute top-10 left-10 w-32 h-32 bg-pink-400 bg-opacity-30 rounded-full blur-2xl animate-float-slow" />
       <div className="absolute bottom-20 right-20 w-40 h-40 bg-indigo-400 bg-opacity-20 rounded-full blur-2xl animate-float" />
