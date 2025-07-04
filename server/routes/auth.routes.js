@@ -118,10 +118,10 @@ router.post("/blogs",verifyToken, async (req,res)=>{
     try{
         //get user id and then create a blog object and add the user id to it
         const userId = req.user.id; //this will get user id
-        const { title, content, image, categories } = req.body; // Extract title, content, image, and categories from req.body
+        const { title, content, imageUrl, categories } = req.body; // Extract title, content, image, and categories from req.body
         
         console.log("User ID:", userId);
-        console.log("Blog data:", { title, content, image, categories });
+        console.log("Blog data:", { title, content, imageUrl, categories });
         
         if (!title || !content) {
             return res.status(400).json({ message: "Title and content are required" });
@@ -131,7 +131,7 @@ router.post("/blogs",verifyToken, async (req,res)=>{
         const newBlog = new Blog({
             title,
             content,
-            imageUrl: image,
+            imageUrl: imageUrl,
             categories: categories || [], // Default to empty array if no categories provided
             author: userId,
             createdAt: new Date(),
