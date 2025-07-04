@@ -6,6 +6,7 @@ import 'react-quill/dist/quill.snow.css';
 import toast from 'react-hot-toast';
 import { createBlog, updateBlog, fetchBlogById, selectCurrentBlog, selectIsCreating, selectIsUpdating, selectBlogError, clearError } from '../store/blogSlice';
 import { selectCurrentUser } from '../store/authSlice';
+import { suggestTitle } from '../utils/gemini';
 
 export default function BlogEditorPage() {
     const dispatch = useDispatch();
@@ -27,6 +28,7 @@ export default function BlogEditorPage() {
     });
 
     const [newCategory, setNewCategory] = useState('');
+    const [isSuggesting, setIsSuggesting] = useState(false);
 
     // Predefined categories
     const predefinedCategories = [
@@ -110,6 +112,23 @@ export default function BlogEditorPage() {
                 ...prev,
                 categories: [...prev.categories, category]
             }));
+        }
+    };
+
+    const handleSuggestTitle = async () => {
+        if (!formData.content.trim()) {
+            toast.error('Please write some content first!');
+            return;
+        }
+        setIsSuggesting(true);
+        try {
+            const suggestion = await suggestTitle(formData.content);
+            setFormData(prev => ({ ...prev, title: suggestion }));
+            toast.success('Title suggested!');
+        } catch (err) {
+            toast.error('Failed to suggest title.');
+        } finally {
+            setIsSuggesting(false);
         }
     };
 
@@ -242,16 +261,26 @@ export default function BlogEditorPage() {
                             <label htmlFor="title" className="block text-white font-semibold mb-2">
                                 Blog Title
                             </label>
-                            <input
-                                type="text"
-                                id="title"
-                                name="title"
-                                value={formData.title}
-                                onChange={handleInputChange}
-                                placeholder="Enter your blog title..."
-                                className="w-full px-4 py-3 rounded-xl bg-white/30 text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
-                                disabled={isCreating || isUpdating}
-                            />
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    id="title"
+                                    name="title"
+                                    value={formData.title}
+                                    onChange={handleInputChange}
+                                    placeholder="Enter your blog title..."
+                                    className="w-full px-4 py-3 rounded-xl bg-white/30 text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+                                    disabled={isCreating || isUpdating || isSuggesting}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleSuggestTitle}
+                                    disabled={isCreating || isUpdating || isSuggesting}
+                                    className="px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isSuggesting ? 'Suggesting...' : 'Suggest Title'}
+                                </button>
+                            </div>
                         </div>
 
                         {/* Categories Section */}
