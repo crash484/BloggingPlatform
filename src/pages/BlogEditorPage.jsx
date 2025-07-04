@@ -23,7 +23,7 @@ export default function BlogEditorPage() {
         title: '',
         content: '',
         categories: [],
-        imageUrl: ''
+        image: ''
     });
 
     const [newCategory, setNewCategory] = useState('');
@@ -49,7 +49,7 @@ export default function BlogEditorPage() {
                 title: currentBlog.title || '',
                 content: currentBlog.content || '',
                 categories: currentBlog.categories || [],
-                imageUrl: currentBlog.imageUrl || ''
+                image: currentBlog.imageUrl || ''
             });
         }
     }, [currentBlog, isEditing]);
@@ -219,8 +219,8 @@ export default function BlogEditorPage() {
                             </label>
                             <input
                                 type="url"
-                                name="imageUrl"
-                                value={formData.imageUrl}
+                                name="image"
+                                value={formData.image}
                                 onChange={handleInputChange}
                                 placeholder="Paste image URL here..."
                                 className="w-full px-4 py-3 rounded-xl bg-white/30 text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
@@ -229,7 +229,7 @@ export default function BlogEditorPage() {
                             {formData.imageUrl && (
                                 <div className="mt-4 flex justify-center">
                                     <img
-                                        src={formData.imageUrl}
+                                        src={formData.image}
                                         alt="Blog Preview"
                                         className="max-h-48 rounded-lg shadow-lg border border-white/20"
                                         onError={e => e.target.style.display = 'none'}
