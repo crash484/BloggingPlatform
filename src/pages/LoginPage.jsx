@@ -64,7 +64,13 @@ export default function LoginPage() {
 
         // localStorage is now handled automatically in authSlice
         dispatch(setCredentials(userPayload));
-        navigate('/dashboard');
+
+        // Navigate based on user role
+        if (data.user.role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/dashboard');
+        }
       } else {
         toast.error(data.message || 'Login failed. Please check your credentials.');
       }

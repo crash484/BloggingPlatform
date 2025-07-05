@@ -245,7 +245,7 @@ export default function BlogEditorPage() {
                                 className="w-full px-4 py-3 rounded-xl bg-white/30 text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
                                 disabled={isCreating || isUpdating}
                             />
-                            {formData.imageUrl && (
+                            {formData.image && (
                                 <div className="mt-4 flex justify-center">
                                     <img
                                         src={formData.image}
