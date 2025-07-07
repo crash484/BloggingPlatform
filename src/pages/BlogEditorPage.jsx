@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import toast from 'react-hot-toast';
@@ -11,8 +11,12 @@ import { suggestTitle } from '../utils/gemini';
 export default function BlogEditorPage() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const location = useLocation();
     const { blogId } = useParams();
     const isEditing = !!blogId;
+
+    // Check for challenge in navigation state
+    const challenge = location.state?.challenge;
 
     const currentUser = useSelector(selectCurrentUser);
     const currentBlog = useSelector(selectCurrentBlog);
@@ -21,9 +25,9 @@ export default function BlogEditorPage() {
     const error = useSelector(selectBlogError);
 
     const [formData, setFormData] = useState({
-        title: '',
+        title: challenge && !isEditing ? challenge.topic : '',
         content: '',
-        categories: [],
+        categories: challenge && !isEditing ? [challenge.category] : [],
         image: ''
     });
 
@@ -227,6 +231,17 @@ export default function BlogEditorPage() {
                         {isEditing ? 'Update your blog post below' : 'Share your thoughts with the world'}
                     </p>
                 </div>
+
+                {/* Challenge Banner */}
+                {challenge && !isEditing && (
+                    <div className="mb-8 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl shadow-lg p-6 text-white text-left">
+                        <div className="mb-2">
+                            <span className="inline-block bg-white/20 px-3 py-1 rounded-lg text-sm font-semibold mr-2">{challenge.category}</span>
+                        </div>
+                        <h2 className="text-2xl font-bold mb-1">Daily Challenge: {challenge.topic}</h2>
+                        <p className="text-purple-100">{challenge.description}</p>
+                    </div>
+                )}
 
                 {/* Editor Form */}
                 <div className="bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-8">

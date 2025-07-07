@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { fetchBlogs, selectAllBlogs, selectBlogLoading } from '../store/blogSlice';
 import { selectCurrentUser } from '../store/authSlice';
 import Navigation from '../components/Navigation';
+import DailyChallenge from '../components/DailyChallenge';
 
 export default function DashboardPage() {
     const dispatch = useDispatch();
@@ -65,6 +66,7 @@ export default function DashboardPage() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-pink-900 via-purple-900 to-indigo-900">
             <Navigation />
+            <DailyChallenge />
 
             <div className="max-w-6xl mx-auto px-4 py-8">
                 {/* Welcome Header */}

@@ -57,6 +57,12 @@ export default function Navigation() {
                             Create Blog
                         </Link>
                         <Link
+                            to="/challenge-leaderboard"
+                            className="text-white font-semibold hover:text-yellow-300 transition-colors"
+                        >
+                            Leaderboard
+                        </Link>
+                        <Link
                             to={`/profile/${currentUser._id}`}
                             className={`px-3 py-2 rounded-lg font-medium transition-colors ${location.pathname.startsWith('/profile/')
                                 ? 'bg-gradient-to-r from-pink-500 to-indigo-500 text-white'
