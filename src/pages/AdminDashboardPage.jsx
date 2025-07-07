@@ -285,7 +285,16 @@ export default function AdminDashboardPage() {
                                                                 >
                                                                     View Posts
                                                                 </button>
-
+                                                                <button
+                                                                    onClick={() => {
+                                                                        if (window.confirm('Are you sure you want to delete this user account? This action cannot be undone.')) {
+                                                                            handleUserAction(user._id, 'delete');
+                                                                        }
+                                                                    }}
+                                                                    className="px-3 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600"
+                                                                >
+                                                                    Delete Account
+                                                                </button>
                                                             </div>
                                                         </td>
                                                     </tr>
