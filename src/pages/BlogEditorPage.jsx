@@ -150,12 +150,40 @@ export default function BlogEditorPage() {
         }
 
         try {
+            let result;
             if (isEditing) {
-                await dispatch(updateBlog({ blogId, blogData: formData })).unwrap();
+                result = await dispatch(updateBlog({ blogId, blogData: formData })).unwrap();
                 toast.success('Blog updated successfully!');
             } else {
-                await dispatch(createBlog(formData)).unwrap();
+                result = await dispatch(createBlog(formData)).unwrap();
                 toast.success('Blog created successfully!');
+                
+                // If this blog was created for a challenge, submit it to the challenge
+                if (challenge && challenge.challengeId && result._id) {
+                    try {
+                        const token = localStorage.getItem('token');
+                        const response = await fetch('http://localhost:5000/api/auth/daily-challenge/participate', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({
+                                blogId: result._id
+                            })
+                        });
+
+                        if (response.ok) {
+                            toast.success('🎉 Successfully participated in today\'s challenge!');
+                        } else {
+                            const errorData = await response.json();
+                            toast.error(`Challenge participation failed: ${errorData.message}`);
+                        }
+                    } catch (challengeError) {
+                        console.error('Error participating in challenge:', challengeError);
+                        toast.error('Blog created but failed to participate in challenge');
+                    }
+                }
             }
             navigate('/blogs');
         } catch (err) {
