@@ -15,6 +15,7 @@ import UserProfilePage from './pages/UserProfilePage';
 import Navigation from './components/Navigation';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import ChallengeLeaderboardPage from './pages/ChallengeLeaderboardPage';
 import './App.css';
 
 function App() {
@@ -24,7 +25,7 @@ function App() {
   useEffect(() => {
     const user = localStorage.getItem('authUser');
     const token = localStorage.getItem('authToken');
-    
+
     if (user && token) {
       // Check if token is expired
       if (isTokenExpired(token)) {
@@ -84,6 +85,8 @@ function App() {
               <AdminDashboardPage />
             </ProtectedRoute>
           } />
+          <Route path="/challenge-leaderboard" element={<ChallengeLeaderboardPage />} />
+          <Route path="/blog-editor" element={<BlogEditorPage />} />
         </Routes>
       </div>
     </Router>

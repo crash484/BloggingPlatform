@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { selectCurrentUser } from '../store/authSlice';
+import { selectCurrentUser, logout } from '../store/authSlice';
 
 export default function AdminDashboardPage() {
     const dispatch = useDispatch();
@@ -33,7 +33,7 @@ export default function AdminDashboardPage() {
             });
 
             const data = await response.json();
-            
+
             if (response.ok) {
                 setUsers(data.users);
             } else {
@@ -49,12 +49,7 @@ export default function AdminDashboardPage() {
 
     const handleUserAction = (userId, action) => {
         // Mock user actions for now
-        if (action === 'suspend') {
-            setUsers(prev => prev.map(user =>
-                user._id === userId ? { ...user, status: 'suspended' } : user
-            ));
-            toast.success('User suspended successfully');
-        } else if (action === 'activate') {
+        if (action === 'activate') {
             setUsers(prev => prev.map(user =>
                 user._id === userId ? { ...user, status: 'active' } : user
             ));
@@ -116,7 +111,7 @@ export default function AdminDashboardPage() {
                     <h2 className="text-2xl font-bold mb-4">Access Denied</h2>
                     <p className="mb-4">You don't have admin privileges.</p>
                     <p className="mb-4 text-purple-200">Current role: {currentUser.role || 'user'}</p>
-                    
+
                     <button
                         onClick={() => navigate('/dashboard')}
                         className="bg-gradient-to-r from-gray-500 to-gray-600 px-6 py-2 rounded-lg hover:scale-105 transition-transform"
@@ -140,11 +135,15 @@ export default function AdminDashboardPage() {
                 <div className="mb-8 text-center">
                     <div className="flex justify-between items-center mb-4">
                         <button
-                            onClick={() => navigate('/dashboard')}
-                            className="bg-gradient-to-r from-gray-600 to-gray-700 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:scale-105 transition-transform flex items-center gap-2"
+                            onClick={() => {
+                                dispatch(logout());
+                                navigate('/');
+                                toast.success('Logged out successfully');
+                            }}
+                            className="bg-gradient-to-r from-red-500 to-pink-500 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:scale-105 transition-transform flex items-center gap-2"
                         >
-                            <span className="text-xl">🏠</span>
-                            Back to Dashboard
+                            <span className="text-xl">🚪</span>
+                            Logout
                         </button>
                         <button
                             onClick={fetchUserStatistics}
@@ -287,10 +286,14 @@ export default function AdminDashboardPage() {
                                                                     View Posts
                                                                 </button>
                                                                 <button
-                                                                    onClick={() => handleUserAction(user._id, 'suspend')}
-                                                                    className="px-3 py-1 bg-yellow-500 text-white rounded text-xs hover:bg-yellow-600"
+                                                                    onClick={() => {
+                                                                        if (window.confirm('Are you sure you want to delete this user account? This action cannot be undone.')) {
+                                                                            handleUserAction(user._id, 'delete');
+                                                                        }
+                                                                    }}
+                                                                    className="px-3 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600"
                                                                 >
-                                                                    Suspend
+                                                                    Delete Account
                                                                 </button>
                                                             </div>
                                                         </td>
