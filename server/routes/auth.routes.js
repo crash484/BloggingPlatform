@@ -6,6 +6,8 @@ import User from "../models/UserModel.js";
 import { verifyToken } from "../middleware/auth.middleware.js";
 import Blog from "../models/BlogModel.js"
 import Comment from "../models/CommentModel.js"
+import Challenge from "../models/ChallengeModel.js"
+import ChallengeService from "../services/ChallengeService.js"
 
 const router = express.Router();
 dotenv.config();
@@ -436,6 +438,277 @@ router.get("/admin", verifyToken, async (req, res) => {
 
     } catch (err) {
         console.log("Error fetching user statistics:", err.message);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+// =============================================================================
+// DAILY CHALLENGE ENDPOINTS
+// =============================================================================
+
+// Get today's daily challenge
+router.get("/daily-challenge", async (req, res) => {
+    try {
+        let todaysChallenge = await Challenge.getTodaysChallenge();
+        
+        // If no challenge exists for today, create one
+        if (!todaysChallenge) {
+            todaysChallenge = await ChallengeService.createTodaysChallenge();
+        }
+
+        return res.status(200).json({
+            message: "Today's challenge retrieved successfully",
+            challenge: todaysChallenge
+        });
+
+    } catch (err) {
+        console.log("Error fetching today's challenge:", err.message);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+// Get challenge by ID
+router.get("/daily-challenge/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const challenge = await Challenge.findById(id).populate('participants.user', 'username email');
+        
+        if (!challenge) {
+            return res.status(404).json({ message: "Challenge not found" });
+        }
+
+        return res.status(200).json({
+            message: "Challenge retrieved successfully",
+            challenge: challenge
+        });
+
+    } catch (err) {
+        console.log("Error fetching challenge:", err.message);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+// Participate in today's challenge (submit a blog for the challenge)
+router.post("/daily-challenge/participate", verifyToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { blogId } = req.body;
+
+        if (!blogId) {
+            return res.status(400).json({ message: "Blog ID is required" });
+        }
+
+        // Verify the blog exists and belongs to the user
+        const blog = await Blog.findById(blogId);
+        if (!blog) {
+            return res.status(404).json({ message: "Blog not found" });
+        }
+
+        if (blog.author.toString() !== userId) {
+            return res.status(403).json({ message: "You can only submit your own blogs" });
+        }
+
+        // Get today's challenge
+        let todaysChallenge = await Challenge.getTodaysChallenge();
+        if (!todaysChallenge) {
+            todaysChallenge = await ChallengeService.createTodaysChallenge();
+        }
+
+        // Add participation
+        const updatedChallenge = await ChallengeService.addParticipation(
+            todaysChallenge._id, 
+            userId, 
+            blogId
+        );
+
+        return res.status(200).json({
+            message: "Successfully participated in today's challenge",
+            challenge: updatedChallenge
+        });
+
+    } catch (err) {
+        console.log("Error participating in challenge:", err.message);
+        if (err.message.includes('already participated')) {
+            return res.status(400).json({ message: err.message });
+        }
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+// Get challenge statistics (admin or general stats)
+router.get("/daily-challenge/stats", verifyToken, async (req, res) => {
+    try {
+        const stats = await ChallengeService.getChallengeStats();
+        
+        return res.status(200).json({
+            message: "Challenge statistics retrieved successfully",
+            stats: stats
+        });
+
+    } catch (err) {
+        console.log("Error fetching challenge stats:", err.message);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+// Get all challenges with pagination (admin only)
+router.get("/admin/daily-challenges", verifyToken, async (req, res) => {
+    try {
+        const currentUserId = req.user.id;
+        const { page = 1, limit = 10, category, difficulty } = req.query;
+
+        // Check if current user is admin
+        const currentUser = await User.findById(currentUserId);
+        if (!currentUser || currentUser.role !== 'admin') {
+            return res.status(403).json({ message: "Only admins can access all challenges" });
+        }
+
+        // Build query filters
+        const filters = { isActive: true };
+        if (category) filters.category = category;
+        if (difficulty) filters.difficulty = difficulty;
+
+        // Calculate pagination
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        // Get challenges with pagination
+        const challenges = await Challenge.find(filters)
+            .populate('participants.user', 'username email')
+            .populate('participants.blog', 'title createdAt')
+            .sort({ date: -1 })
+            .skip(skip)
+            .limit(parseInt(limit));
+
+        const totalChallenges = await Challenge.countDocuments(filters);
+        const totalPages = Math.ceil(totalChallenges / parseInt(limit));
+
+        return res.status(200).json({
+            message: "Challenges retrieved successfully",
+            challenges: challenges,
+            pagination: {
+                currentPage: parseInt(page),
+                totalPages: totalPages,
+                totalChallenges: totalChallenges,
+                hasNext: parseInt(page) < totalPages,
+                hasPrev: parseInt(page) > 1
+            }
+        });
+
+    } catch (err) {
+        console.log("Error fetching all challenges:", err.message);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+// Generate a new challenge manually (admin only)
+router.post("/admin/daily-challenge/generate", verifyToken, async (req, res) => {
+    try {
+        const currentUserId = req.user.id;
+        const { category, date } = req.body;
+
+        // Check if current user is admin
+        const currentUser = await User.findById(currentUserId);
+        if (!currentUser || currentUser.role !== 'admin') {
+            return res.status(403).json({ message: "Only admins can generate challenges" });
+        }
+
+        // Generate challenge data
+        const challengeData = await ChallengeService.generateDailyChallenge(category);
+        
+        // Set the date (default to today if not provided)
+        const challengeDate = date ? new Date(date) : new Date();
+        challengeDate.setHours(0, 0, 0, 0);
+
+        // Check if challenge already exists for this date
+        const existingChallenge = await Challenge.findOne({ 
+            date: challengeDate,
+            isActive: true 
+        });
+
+        if (existingChallenge) {
+            return res.status(400).json({ 
+                message: "A challenge already exists for this date",
+                existingChallenge: existingChallenge
+            });
+        }
+
+        // Create new challenge
+        const challenge = new Challenge({
+            ...challengeData,
+            date: challengeDate,
+            createdBy: 'Admin'
+        });
+
+        const savedChallenge = await challenge.save();
+
+        return res.status(201).json({
+            message: "Challenge generated successfully",
+            challenge: savedChallenge
+        });
+
+    } catch (err) {
+        console.log("Error generating challenge:", err.message);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+// Get challenge leaderboard (most active participants)
+router.get("/daily-challenge/leaderboard", async (req, res) => {
+    try {
+        const { limit = 10, timeframe = 'all' } = req.query;
+
+        let dateFilter = {};
+        if (timeframe === 'month') {
+            const lastMonth = new Date();
+            lastMonth.setMonth(lastMonth.getMonth() - 1);
+            dateFilter = { date: { $gte: lastMonth } };
+        } else if (timeframe === 'week') {
+            const lastWeek = new Date();
+            lastWeek.setDate(lastWeek.getDate() - 7);
+            dateFilter = { date: { $gte: lastWeek } };
+        }
+
+        const leaderboard = await Challenge.aggregate([
+            { $match: { isActive: true, ...dateFilter } },
+            { $unwind: '$participants' },
+            {
+                $group: {
+                    _id: '$participants.user',
+                    challengesCompleted: { $sum: 1 },
+                    lastParticipation: { $max: '$participants.submittedAt' }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'user'
+                }
+            },
+            { $unwind: '$user' },
+            {
+                $project: {
+                    _id: 1,
+                    challengesCompleted: 1,
+                    lastParticipation: 1,
+                    username: '$user.username',
+                    email: '$user.email',
+                    avatarUrl: '$user.avatarUrl'
+                }
+            },
+            { $sort: { challengesCompleted: -1, lastParticipation: -1 } },
+            { $limit: parseInt(limit) }
+        ]);
+
+        return res.status(200).json({
+            message: "Leaderboard retrieved successfully",
+            leaderboard: leaderboard,
+            timeframe: timeframe
+        });
+
+    } catch (err) {
+        console.log("Error fetching leaderboard:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 });
