@@ -270,7 +270,7 @@ export default function UserProfilePage() {
                                     id="category"
                                     value={selectedCategory}
                                     onChange={(e) => setSelectedCategory(e.target.value)}
-                                    className="w-full px-4 py-3 rounded-xl bg-white/30 text-white focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+                                    className="w-full px-4 py-3 rounded-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
                                 >
                                     <option value="all">All Categories</option>
                                     {categories.map(category => (
