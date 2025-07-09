@@ -1,7 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import bcrypt from "bcrypt";
-import jwt  from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import User from "../models/UserModel.js";
 import { verifyToken } from "../middleware/auth.middleware.js";
 import Blog from "../models/BlogModel.js"
@@ -13,42 +13,42 @@ const router = express.Router();
 dotenv.config();
 const key = process.env.SECRET_KEY;
 
-router.post("/register", async (req,res)=>{
-    try{
-        const {name,email,password} = req.body;
+router.post("/register", async (req, res) => {
+    try {
+        const { name, email, password } = req.body;
 
         //check if user with email already exists or not
-        const alreadyExists = await User.findOne({email});
+        const alreadyExists = await User.findOne({ email });
 
-        if( alreadyExists ) return res.status(403).json({message: "user with email already exists"});
-        
+        if (alreadyExists) return res.status(403).json({ message: "user with email already exists" });
+
 
         const hashed = await bcrypt.hash(password, 10);
 
-        const user = new User({ username: name,email, password:hashed});
-        
-        const result = await user.save();
-        
-        if (result) return res.status(200).json({message: "User is successfully registered"});
-        else return res.status(403).json({message:"unable to register user"});
+        const user = new User({ username: name, email, password: hashed });
 
-    } catch( err ){
-        console.log("error in registering ",err.message);//remove in production
-        return res.status(500).json({ message: "internal server error"});
+        const result = await user.save();
+
+        if (result) return res.status(200).json({ message: "User is successfully registered" });
+        else return res.status(403).json({ message: "unable to register user" });
+
+    } catch (err) {
+        console.log("error in registering ", err.message);//remove in production
+        return res.status(500).json({ message: "internal server error" });
     }
 })
 
-router.post("/login", async (req,res)=>{
-    try{
-        const {email,password} = req.body;
+router.post("/login", async (req, res) => {
+    try {
+        const { email, password } = req.body;
         //implement jwt verification when able to send and recieve jwt
-        const user = await User.findOne({email});
+        const user = await User.findOne({ email });
 
-        if( !user ) return res.status(401).json({message: "user with email doesnt exists"});
+        if (!user) return res.status(401).json({ message: "user with email doesnt exists" });
 
         const isMatch = await bcrypt.compare(password, user.password);
 
-        if( isMatch ) {
+        if (isMatch) {
             // Create a clean payload without sensitive data
             const payload = {
                 id: user._id,
@@ -57,10 +57,10 @@ router.post("/login", async (req,res)=>{
                 role: user.role
             };
 
-            jwt.sign(payload, key, {expiresIn:'1h'}, (err, token) => {
-                if(err) {
+            jwt.sign(payload, key, { expiresIn: '1h' }, (err, token) => {
+                if (err) {
                     console.log("JWT signing error:", err);
-                    return res.status(500).json({message: "Error generating token"});
+                    return res.status(500).json({ message: "Error generating token" });
                 }
 
                 return res.status(200).json({
@@ -75,60 +75,60 @@ router.post("/login", async (req,res)=>{
                 });
             });
         } else {
-            return res.status(401).json({message: "invalid password"});
+            return res.status(401).json({ message: "invalid password" });
         }
-    }catch (err) {
-        console.log("error in login backend ",err.message);
-        return res.status(500).json({ message: "internal server error"});
+    } catch (err) {
+        console.log("error in login backend ", err.message);
+        return res.status(500).json({ message: "internal server error" });
     }
 })
 
-router.post('/verify',verifyToken,(req,res)=>{ 
-    res.json({message:"user is verified"});
+router.post('/verify', verifyToken, (req, res) => {
+    res.json({ message: "user is verified" });
 })
 
 //path to to retrieve all blogs
-router.get("/blogs",async (req,res)=>{
+router.get("/blogs", async (req, res) => {
     try {
         //list blogs of all users
         const blogs = await Blog.find().populate('author', 'username email').sort({ createdAt: -1 });
         return res.status(200).json(blogs);
-    } catch(err) {
+    } catch (err) {
         console.log("Error fetching blogs:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 })
 
 //path to fetch one blog
-router.get("/blogs/:id",async(req,res)=>{
+router.get("/blogs/:id", async (req, res) => {
     try {
         const { id } = req.params;
         const blog = await Blog.findById(id).populate('author', 'username email');
-        
+
         if (!blog) {
             return res.status(404).json({ message: "Blog not found" });
         }
         return res.status(200).json(blog);
-    } catch(err) {
+    } catch (err) {
         console.log("Error fetching blog:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 })
 
 //path to create a blog
-router.post("/blogs",verifyToken, async (req,res)=>{
-    try{
+router.post("/blogs", verifyToken, async (req, res) => {
+    try {
         //get user id and then create a blog object and add the user id to it
         const userId = req.user.id; //this will get user id
         const { title, content, imageUrl, categories } = req.body; // Extract title, content, image, and categories from req.body
-        
+
         console.log("User ID:", userId);
         console.log("Blog data:", { title, content, imageUrl, categories });
-        
+
         if (!title || !content) {
             return res.status(400).json({ message: "Title and content are required" });
         }
-        
+
         // Create new blog
         const newBlog = new Blog({
             title,
@@ -139,111 +139,112 @@ router.post("/blogs",verifyToken, async (req,res)=>{
             createdAt: new Date(),
             updatedAt: new Date()
         });
-        
+
         const savedBlog = await newBlog.save();
-        
+
         // Populate author data for response
         const populatedBlog = await Blog.findById(savedBlog._id).populate('author', 'username email');
-        
+
         return res.status(201).json(populatedBlog);
-        
-    } catch(err) {
+
+    } catch (err) {
         console.log("Error creating blog:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 })
 
 //path to update blog
-router.put("/blogs/:id",verifyToken, async( req,res)=>{
+router.put("/blogs/:id", verifyToken, async (req, res) => {
     try {
+        console.log("Received update data:", req.body); // Debug log
         const { id } = req.params;
-        const { title, content, image, categories } = req.body;
+        const { title, content, imageUrl, categories } = req.body;
         const userId = req.user.id;
-        
+
         if (!title || !content) {
             return res.status(400).json({ message: "Title and content are required" });
         }
-        
+
         // Find the blog and check if user owns it
         const blog = await Blog.findById(id);
-        
+
         if (!blog) {
             return res.status(404).json({ message: "Blog not found" });
         }
-        
+
         if (blog.author.toString() !== userId) {
             return res.status(403).json({ message: "You can only update your own blogs" });
         }
-        
+
         // Prepare update data
         const updateData = {
             title,
             content,
             updatedAt: new Date()
         };
-        
-        // Add image if provided
-        if (image !== undefined) {
-            updateData.imageUrl = image;
+
+        // Add imageUrl if provided
+        if (imageUrl !== undefined) {
+            updateData.imageUrl = imageUrl;
         }
-        
+
         // Add categories if provided
         if (categories !== undefined) {
             updateData.categories = categories;
         }
-        
+
         // Update the blog
         const updatedBlog = await Blog.findByIdAndUpdate(
             id,
             updateData,
             { new: true }
         ).populate('author', 'username email');
-        
+
         return res.status(200).json(updatedBlog);
-        
-    } catch(err) {
+
+    } catch (err) {
         console.log("Error updating blog:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 })
 
 //path to delete blog
-router.delete("/blogs/:id",verifyToken,async(req,res)=>{
+router.delete("/blogs/:id", verifyToken, async (req, res) => {
     try {
         const { id } = req.params;
         const userId = req.user.id;
-        
+
         // Find the blog and check if user owns it
         const blog = await Blog.findById(id);
-        
+
         if (!blog) {
             return res.status(404).json({ message: "Blog not found" });
         }
-        
+
         if (blog.author.toString() !== userId) {
             return res.status(403).json({ message: "You can only delete your own blogs" });
         }
-        
+
         // Delete the blog
         await Blog.findByIdAndDelete(id);
-        
+
         return res.status(200).json({ message: "Blog deleted successfully" });
-        
-    } catch(err) {
+
+    } catch (err) {
         console.log("Error deleting blog:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 })
 
 //route for when comment is added push to the blogmodel too
-router.post("/blogs/:id/comments",verifyToken, async (req,res)=>{
+router.post("/blogs/:id/comments", verifyToken, async (req, res) => {
     try {
         const { id: blogId } = req.params; // Get blogId from URL params
         const userId = req.user.id;
         const { text } = req.body;
 
-        if( !text || !text.trim() ) {
-            return res.status(400).json({message: "Comment content is required"});
+        if (!text || !text.trim()) {
+            return res.status(400).json({ message: "Comment content is required" });
         }
 
         // Check if blog exists
@@ -273,7 +274,7 @@ router.post("/blogs/:id/comments",verifyToken, async (req,res)=>{
 
         return res.status(201).json(populatedComment);
 
-    } catch(err) {
+    } catch (err) {
         console.log("Error creating comment:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
@@ -317,7 +318,7 @@ router.post("/blogs/:id/like", verifyToken, async (req, res) => {
 
         return res.status(200).json(updatedBlog);
 
-    } catch(err) {
+    } catch (err) {
         console.log("Error toggling like:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
@@ -450,7 +451,7 @@ router.get("/admin", verifyToken, async (req, res) => {
 router.get("/daily-challenge", async (req, res) => {
     try {
         let todaysChallenge = await Challenge.getTodaysChallenge();
-        
+
         // If no challenge exists for today, create one
         if (!todaysChallenge) {
             todaysChallenge = await ChallengeService.createTodaysChallenge();
@@ -472,7 +473,7 @@ router.get("/daily-challenge/:id", async (req, res) => {
     try {
         const { id } = req.params;
         const challenge = await Challenge.findById(id).populate('participants.user', 'username email');
-        
+
         if (!challenge) {
             return res.status(404).json({ message: "Challenge not found" });
         }
@@ -516,8 +517,8 @@ router.post("/daily-challenge/participate", verifyToken, async (req, res) => {
 
         // Add participation
         const updatedChallenge = await ChallengeService.addParticipation(
-            todaysChallenge._id, 
-            userId, 
+            todaysChallenge._id,
+            userId,
             blogId
         );
 
@@ -539,7 +540,7 @@ router.post("/daily-challenge/participate", verifyToken, async (req, res) => {
 router.get("/daily-challenge/stats", verifyToken, async (req, res) => {
     try {
         const stats = await ChallengeService.getChallengeStats();
-        
+
         return res.status(200).json({
             message: "Challenge statistics retrieved successfully",
             stats: stats
@@ -614,19 +615,19 @@ router.post("/admin/daily-challenge/generate", verifyToken, async (req, res) => 
 
         // Generate challenge data
         const challengeData = await ChallengeService.generateDailyChallenge(category);
-        
+
         // Set the date (default to today if not provided)
         const challengeDate = date ? new Date(date) : new Date();
         challengeDate.setHours(0, 0, 0, 0);
 
         // Check if challenge already exists for this date
-        const existingChallenge = await Challenge.findOne({ 
+        const existingChallenge = await Challenge.findOne({
             date: challengeDate,
-            isActive: true 
+            isActive: true
         });
 
         if (existingChallenge) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 message: "A challenge already exists for this date",
                 existingChallenge: existingChallenge
             });

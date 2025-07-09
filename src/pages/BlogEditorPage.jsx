@@ -150,14 +150,23 @@ export default function BlogEditorPage() {
         }
 
         try {
+            // Prepare blog data with correct field names for backend
+            const blogData = {
+                title: formData.title,
+                content: formData.content,
+                categories: formData.categories,
+                imageUrl: formData.image // Map 'image' to 'imageUrl' for backend
+            };
+
             let result;
             if (isEditing) {
-                result = await dispatch(updateBlog({ blogId, blogData: formData })).unwrap();
+                console.log("Updating blog with data:", blogData); // Debug log
+                result = await dispatch(updateBlog({ blogId, blogData })).unwrap();
                 toast.success('Blog updated successfully!');
             } else {
-                result = await dispatch(createBlog(formData)).unwrap();
+                result = await dispatch(createBlog(blogData)).unwrap();
                 toast.success('Blog created successfully!');
-                
+
                 // If this blog was created for a challenge, submit it to the challenge
                 if (challenge && challenge.challengeId && result._id) {
                     try {
