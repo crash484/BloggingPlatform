@@ -467,7 +467,131 @@ router.get("/daily-challenge", async (req, res) => {
     }
 });
 
-// Get challenge by ID
+// Get challenge leaderboard (most active participants) - MOVED UP TO AVOID CONFLICT WITH :id ROUTE
+router.get("/daily-challenge/leaderboard", async (req, res) => {
+    try {
+        const { limit = 10, timeframe = 'all' } = req.query;
+
+        let dateFilter = {};
+        if (timeframe === 'month') {
+            const lastMonth = new Date();
+            lastMonth.setMonth(lastMonth.getMonth() - 1);
+            dateFilter = { date: { $gte: lastMonth } };
+        } else if (timeframe === 'week') {
+            const lastWeek = new Date();
+            lastWeek.setDate(lastWeek.getDate() - 7);
+            dateFilter = { date: { $gte: lastWeek } };
+        }
+
+        const leaderboard = await Challenge.aggregate([
+            { $match: { isActive: true, ...dateFilter } },
+            { $unwind: '$participants' },
+            {
+                $group: {
+                    _id: '$participants.user',
+                    challengesCompleted: { $sum: 1 },
+                    lastParticipation: { $max: '$participants.submittedAt' }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'user'
+                }
+            },
+            { $unwind: '$user' },
+            {
+                $project: {
+                    _id: 1,
+                    challengesCompleted: 1,
+                    lastParticipation: 1,
+                    username: '$user.username',
+                    email: '$user.email',
+                    avatarUrl: '$user.avatarUrl'
+                }
+            },
+            { $sort: { challengesCompleted: -1, lastParticipation: -1 } },
+            { $limit: parseInt(limit) }
+        ]);
+
+        return res.status(200).json({
+            message: "Leaderboard retrieved successfully",
+            leaderboard: leaderboard,
+            timeframe: timeframe
+        });
+
+    } catch (err) {
+        console.log("Error fetching leaderboard:", err.message);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+// Get challenge statistics (admin or general stats)
+router.get("/daily-challenge/stats", verifyToken, async (req, res) => {
+    try {
+        const stats = await ChallengeService.getChallengeStats();
+        
+        return res.status(200).json({
+            message: "Challenge statistics retrieved successfully",
+            stats: stats
+        });
+
+    } catch (err) {
+        console.log("Error fetching challenge stats:", err.message);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+// Participate in today's challenge (submit a blog for the challenge)
+router.post("/daily-challenge/participate", verifyToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { blogId } = req.body;
+
+        if (!blogId) {
+            return res.status(400).json({ message: "Blog ID is required" });
+        }
+
+        // Verify the blog exists and belongs to the user
+        const blog = await Blog.findById(blogId);
+        if (!blog) {
+            return res.status(404).json({ message: "Blog not found" });
+        }
+
+        if (blog.author.toString() !== userId) {
+            return res.status(403).json({ message: "You can only submit your own blogs" });
+        }
+
+        // Get today's challenge
+        let todaysChallenge = await Challenge.getTodaysChallenge();
+        if (!todaysChallenge) {
+            todaysChallenge = await ChallengeService.createTodaysChallenge();
+        }
+
+        // Add participation
+        const updatedChallenge = await ChallengeService.addParticipation(
+            todaysChallenge._id, 
+            userId, 
+            blogId
+        );
+
+        return res.status(200).json({
+            message: "Successfully participated in today's challenge",
+            challenge: updatedChallenge
+        });
+
+    } catch (err) {
+        console.log("Error participating in challenge:", err.message);
+        if (err.message.includes('already participated')) {
+            return res.status(400).json({ message: err.message });
+        }
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+// Get challenge by ID - MOVED DOWN TO AVOID CONFLICT WITH SPECIFIC ROUTES
 router.get("/daily-challenge/:id", async (req, res) => {
     try {
         const { id } = req.params;
@@ -648,67 +772,6 @@ router.post("/admin/daily-challenge/generate", verifyToken, async (req, res) => 
 
     } catch (err) {
         console.log("Error generating challenge:", err.message);
-        return res.status(500).json({ message: "Internal server error" });
-    }
-});
-
-// Get challenge leaderboard (most active participants)
-router.get("/daily-challenge/leaderboard", async (req, res) => {
-    try {
-        const { limit = 10, timeframe = 'all' } = req.query;
-
-        let dateFilter = {};
-        if (timeframe === 'month') {
-            const lastMonth = new Date();
-            lastMonth.setMonth(lastMonth.getMonth() - 1);
-            dateFilter = { date: { $gte: lastMonth } };
-        } else if (timeframe === 'week') {
-            const lastWeek = new Date();
-            lastWeek.setDate(lastWeek.getDate() - 7);
-            dateFilter = { date: { $gte: lastWeek } };
-        }
-
-        const leaderboard = await Challenge.aggregate([
-            { $match: { isActive: true, ...dateFilter } },
-            { $unwind: '$participants' },
-            {
-                $group: {
-                    _id: '$participants.user',
-                    challengesCompleted: { $sum: 1 },
-                    lastParticipation: { $max: '$participants.submittedAt' }
-                }
-            },
-            {
-                $lookup: {
-                    from: 'users',
-                    localField: '_id',
-                    foreignField: '_id',
-                    as: 'user'
-                }
-            },
-            { $unwind: '$user' },
-            {
-                $project: {
-                    _id: 1,
-                    challengesCompleted: 1,
-                    lastParticipation: 1,
-                    username: '$user.username',
-                    email: '$user.email',
-                    avatarUrl: '$user.avatarUrl'
-                }
-            },
-            { $sort: { challengesCompleted: -1, lastParticipation: -1 } },
-            { $limit: parseInt(limit) }
-        ]);
-
-        return res.status(200).json({
-            message: "Leaderboard retrieved successfully",
-            leaderboard: leaderboard,
-            timeframe: timeframe
-        });
-
-    } catch (err) {
-        console.log("Error fetching leaderboard:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 });
