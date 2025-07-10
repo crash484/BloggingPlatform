@@ -28,7 +28,18 @@ const blogSchema = new mongoose.Schema({
   comments: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Comment'
-  }]
+  }],
+  // Flag to mark if this blog is a daily challenge submission
+  isChallengeSubmission: {
+    type: Boolean,
+    default: false
+  },
+  // Reference to the challenge if this is a challenge submission
+  challenge: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Challenge',
+    default: null
+  }
 }, {
   timestamps: true
 });
