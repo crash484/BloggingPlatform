@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../store/authSlice";
@@ -82,6 +82,8 @@ export default function LandingPage() {
     const [currentCategory, setCurrentCategory] = useState(0);
     const [currentQuote, setCurrentQuote] = useState(0);
     const currentUser = useSelector(selectCurrentUser);
+    const [aboutVisible, setAboutVisible] = useState(false);
+    const aboutRef = useRef(null);
 
     useEffect(() => {
         setIsVisible(true);
@@ -102,6 +104,18 @@ export default function LandingPage() {
             clearInterval(testimonialInterval);
             clearInterval(categoryInterval);
             clearInterval(quoteInterval);
+        };
+    }, []);
+
+    useEffect(() => {
+        // About section intersection observer
+        const observer = new window.IntersectionObserver(
+            ([entry]) => setAboutVisible(entry.isIntersecting),
+            { threshold: 0.2 }
+        );
+        if (aboutRef.current) observer.observe(aboutRef.current);
+        return () => {
+            if (aboutRef.current) observer.unobserve(aboutRef.current);
         };
     }, []);
 
@@ -262,6 +276,63 @@ export default function LandingPage() {
                         animation: fade-quote 4s linear;
                     }
                 `}</style>
+            </section>
+
+            {/* About Section */}
+            <section
+                id="about"
+                ref={aboutRef}
+                className={`relative z-10 py-20 px-4 bg-white/10 backdrop-blur-lg border-t border-white/20 transition-all duration-1000 ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+            >
+                <div className="max-w-5xl mx-auto text-center">
+                    <h2 className="text-4xl md:text-5xl font-bold text-white mb-8 animate-gradient-move">
+                        <span className="bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent animate-gradient-move">
+                            About BlogCraft Pro
+                        </span>
+                    </h2>
+                    <p className="text-xl text-gray-200 mb-8 max-w-3xl mx-auto leading-relaxed transition-all duration-1000 delay-200"
+                        style={{
+                            opacity: aboutVisible ? 1 : 0,
+                            transform: aboutVisible ? 'translateY(0)' : 'translateY(20px)'
+                        }}
+                    >
+                        BlogCraft Pro is a next-generation blogging platform designed for creators, writers, and innovators.
+                        Our mission is to empower everyone to share their stories, ideas, and expertise with the world using
+                        cutting-edge AI tools, beautiful design, and a vibrant community. Whether you're a seasoned blogger or
+                        just starting out, BlogCraft Pro gives you everything you need to succeed.
+                    </p>
+                    <div className="flex flex-col md:flex-row gap-8 justify-center mt-8">
+                        <div
+                            className={`flex-1 bg-white/20 rounded-2xl p-6 shadow-lg transition-all duration-1000 delay-300 ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'} hover:scale-105 hover:shadow-2xl`}
+                        >
+                            <h3 className="text-2xl font-bold text-purple-200 mb-2">Our Vision</h3>
+                            <p className="text-gray-100">
+                                To make blogging accessible, enjoyable, and rewarding for everyone, everywhere.
+                            </p>
+                        </div>
+                        <div
+                            className={`flex-1 bg-white/20 rounded-2xl p-6 shadow-lg transition-all duration-1000 delay-500 ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'} hover:scale-105 hover:shadow-2xl`}
+                        >
+                            <h3 className="text-2xl font-bold text-purple-200 mb-2">Our Values</h3>
+                            <ul className="text-gray-100 list-disc list-inside">
+                                <li>Creativity & Innovation</li>
+                                <li>Community & Collaboration</li>
+                                <li>Empowerment & Growth</li>
+                                <li>Integrity & Inclusivity</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <style>{`
+                @keyframes gradient-move {
+                  0%,100% { background-position: 0% 50%; }
+                  50% { background-position: 100% 50%; }
+                }
+                .animate-gradient-move {
+                  background-size: 200% 200%;
+                  animation: gradient-move 3s ease infinite;
+                }
+              `}</style>
             </section>
 
             {/* CTA Section */}
