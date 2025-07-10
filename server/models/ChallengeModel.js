@@ -53,6 +53,38 @@ const challengeSchema = new mongoose.Schema({
             default: Date.now
         }
     }],
+    // Winner selection fields
+    winner: {
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            default: null
+        },
+        blog: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Blog',
+            default: null
+        },
+        selectedAt: {
+            type: Date,
+            default: null
+        },
+        selectionMethod: {
+            type: String,
+            enum: ['likes', 'random', 'manual', 'ai_scoring'],
+            default: null
+        },
+        score: {
+            type: Number,
+            default: null
+        }
+    },
+    // Challenge status
+    status: {
+        type: String,
+        enum: ['active', 'ended', 'winner_selected'],
+        default: 'active'
+    },
     metadata: {
         promptUsed: String,
         generatedAt: Date,
@@ -84,6 +116,34 @@ challengeSchema.methods.hasUserParticipated = function(userId) {
     return this.participants.some(participant => 
         participant.user.toString() === userId.toString()
     );
+};
+
+// Method to get challenge statistics
+challengeSchema.methods.getStats = function() {
+    return {
+        totalParticipants: this.participants.length,
+        hasWinner: this.status === 'winner_selected',
+        winner: this.winner,
+        status: this.status,
+        participationRate: this.participants.length > 0 ? 100 : 0
+    };
+};
+
+// Method to end a challenge
+challengeSchema.methods.endChallenge = function() {
+    if (this.status === 'active') {
+        this.status = 'ended';
+    }
+    return this.save();
+};
+
+// Static method to get challenges that need winner selection
+challengeSchema.statics.getChallengesNeedingWinners = function() {
+    return this.find({
+        status: 'ended',
+        'participants.0': { $exists: true } // Has at least one participant
+    }).populate('participants.user', 'username email')
+      .populate('participants.blog', 'title likes');
 };
 
 const Challenge = mongoose.model('Challenge', challengeSchema);

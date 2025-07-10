@@ -219,6 +219,256 @@ Return the response in this exact JSON format:
             throw error;
         }
     }
+
+    // Select winner for a challenge
+    async selectWinner(challengeId, method = 'likes') {
+        try {
+            const challenge = await Challenge.findById(challengeId)
+                .populate({
+                    path: 'participants.blog',
+                    populate: {
+                        path: 'author',
+                        select: 'username email'
+                    }
+                })
+                .populate('participants.user', 'username email');
+
+            if (!challenge) {
+                throw new Error('Challenge not found');
+            }
+
+            if (challenge.participants.length === 0) {
+                throw new Error('No participants in this challenge');
+            }
+
+            if (challenge.status === 'winner_selected') {
+                throw new Error('Winner already selected for this challenge');
+            }
+
+            let winner;
+            let score = null;
+
+            switch (method) {
+                case 'likes':
+                    winner = await this.selectWinnerByLikes(challenge);
+                    score = winner.blog.likes.length;
+                    break;
+                case 'random':
+                    winner = this.selectWinnerRandomly(challenge);
+                    break;
+                case 'ai_scoring':
+                    winner = await this.selectWinnerByAI(challenge);
+                    score = winner.score;
+                    break;
+                case 'manual':
+                    throw new Error('Manual selection requires specific winner ID');
+                default:
+                    winner = await this.selectWinnerByLikes(challenge);
+                    score = winner.blog.likes.length;
+            }
+
+            // Update challenge with winner
+            challenge.winner = {
+                user: winner.user._id,
+                blog: winner.blog._id,
+                selectedAt: new Date(),
+                selectionMethod: method,
+                score: score
+            };
+            challenge.status = 'winner_selected';
+
+            await challenge.save();
+            return challenge;
+
+        } catch (error) {
+            console.error('Error selecting winner:', error);
+            throw error;
+        }
+    }
+
+    // Select winner by most likes
+    async selectWinnerByLikes(challenge) {
+        const participantsWithLikes = challenge.participants.map(participant => ({
+            user: participant.user,
+            blog: participant.blog,
+            likesCount: participant.blog.likes.length
+        }));
+
+        participantsWithLikes.sort((a, b) => b.likesCount - a.likesCount);
+        return participantsWithLikes[0];
+    }
+
+    // Select winner randomly
+    selectWinnerRandomly(challenge) {
+        const randomIndex = Math.floor(Math.random() * challenge.participants.length);
+        const participant = challenge.participants[randomIndex];
+        return {
+            user: participant.user,
+            blog: participant.blog
+        };
+    }
+
+    // Select winner using AI scoring (placeholder for future implementation)
+    async selectWinnerByAI(challenge) {
+        // For now, use a simple scoring based on content length and likes
+        const participantsWithScores = challenge.participants.map(participant => {
+            const contentScore = Math.min(participant.blog.content.length / 100, 10); // Max 10 points for content
+            const likesScore = participant.blog.likes.length * 2; // 2 points per like
+            const totalScore = contentScore + likesScore;
+
+            return {
+                user: participant.user,
+                blog: participant.blog,
+                score: totalScore
+            };
+        });
+
+        participantsWithScores.sort((a, b) => b.score - a.score);
+        return participantsWithScores[0];
+    }
+
+    // Manually select winner
+    async selectWinnerManually(challengeId, userId, blogId) {
+        try {
+            const challenge = await Challenge.findById(challengeId);
+            if (!challenge) {
+                throw new Error('Challenge not found');
+            }
+
+            // Verify the user participated in this challenge
+            const participant = challenge.participants.find(p => 
+                p.user.toString() === userId && p.blog.toString() === blogId
+            );
+
+            if (!participant) {
+                throw new Error('User did not participate in this challenge with this blog');
+            }
+
+            challenge.winner = {
+                user: userId,
+                blog: blogId,
+                selectedAt: new Date(),
+                selectionMethod: 'manual'
+            };
+            challenge.status = 'winner_selected';
+
+            await challenge.save();
+            return challenge;
+
+        } catch (error) {
+            console.error('Error manually selecting winner:', error);
+            throw error;
+        }
+    }
+
+    // Get challenge winners (for leaderboards)
+    async getChallengeWinners(timeframe = 'all', limit = 10) {
+        try {
+            let dateFilter = {};
+            
+            if (timeframe === 'week') {
+                const oneWeekAgo = new Date();
+                oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+                dateFilter = { 'winner.selectedAt': { $gte: oneWeekAgo } };
+            } else if (timeframe === 'month') {
+                const oneMonthAgo = new Date();
+                oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+                dateFilter = { 'winner.selectedAt': { $gte: oneMonthAgo } };
+            }
+
+            const winners = await Challenge.find({
+                status: 'winner_selected',
+                ...dateFilter
+            })
+            .populate('winner.user', 'username email')
+            .populate('winner.blog', 'title')
+            .sort({ 'winner.selectedAt': -1 })
+            .limit(limit);
+
+            return winners;
+
+        } catch (error) {
+            console.error('Error getting challenge winners:', error);
+            throw error;
+        }
+    }
+
+    // Auto-select winners for ended challenges
+    async autoSelectWinners() {
+        try {
+            const challengesNeedingWinners = await Challenge.getChallengesNeedingWinners();
+            const results = [];
+
+            for (const challenge of challengesNeedingWinners) {
+                try {
+                    const updatedChallenge = await this.selectWinner(challenge._id, 'likes');
+                    results.push({
+                        challengeId: challenge._id,
+                        topic: challenge.topic,
+                        winner: updatedChallenge.winner,
+                        status: 'success'
+                    });
+                } catch (error) {
+                    results.push({
+                        challengeId: challenge._id,
+                        topic: challenge.topic,
+                        error: error.message,
+                        status: 'failed'
+                    });
+                }
+            }
+
+            return results;
+
+        } catch (error) {
+            console.error('Error auto-selecting winners:', error);
+            throw error;
+        }
+    }
+
+    // End yesterday's challenges and prepare for winner selection
+    async endYesterdaysChallenges() {
+        try {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            yesterday.setHours(0, 0, 0, 0);
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const yesterdaysChallenges = await Challenge.find({
+                date: { $gte: yesterday, $lt: today },
+                status: 'active'
+            });
+
+            const results = [];
+
+            for (const challenge of yesterdaysChallenges) {
+                try {
+                    await challenge.endChallenge();
+                    results.push({
+                        challengeId: challenge._id,
+                        topic: challenge.topic,
+                        participants: challenge.participants.length,
+                        status: 'ended'
+                    });
+                } catch (error) {
+                    results.push({
+                        challengeId: challenge._id,
+                        topic: challenge.topic,
+                        error: error.message,
+                        status: 'failed'
+                    });
+                }
+            }
+
+            return results;
+
+        } catch (error) {
+            console.error('Error ending yesterday\'s challenges:', error);
+            throw error;
+        }
+    }
 }
 
 export default new ChallengeService();
