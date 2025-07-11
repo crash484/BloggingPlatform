@@ -14,7 +14,7 @@ const port = 5000;
 app.use(express.json()); //to read json data
 app.use(express.urlencoded({ extended: true })) //for url encoded data, form data
 app.use(cors({
-  origin: ['http://localhost:5173'], // frontend origin allowed
+  origin: ['http://localhost:5173', 'http://localhost:5174'], // frontend origins allowed
   credentials: true, // if you use cookies or authentication headers
   allowedHeaders: ['Content-Type', 'Authorization'],
 
