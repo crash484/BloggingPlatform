@@ -578,11 +578,17 @@ router.get("/admin/daily-challenge/ai-status", verifyToken, async (req, res) => 
             return res.status(403).json({ message: "Only admins can check AI status" });
         }
 
+        console.log('🔍 Debug: Admin verified, fetching AI status...');
+
         const aiStatus = await ChallengeService.checkAIStatus();
+        console.log('🔍 Debug: AI status result:', aiStatus);
+        
         const stats = await ChallengeService.getChallengeStats();
+        console.log('🔍 Debug: Challenge stats result:', stats);
 
         // Get today's challenge details
         const todaysChallenge = await Challenge.getTodaysChallenge();
+        console.log('🔍 Debug: Today\'s challenge:', todaysChallenge ? 'Found' : 'Not found');
 
         return res.status(200).json({
             message: "AI status and challenge details retrieved successfully",
@@ -996,6 +1002,6 @@ router.get("/admin/daily-challenge/needs-winners", verifyToken, async (req, res)
         console.log("Error fetching challenges needing winners:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
-});
+}); 
 
 export default router;

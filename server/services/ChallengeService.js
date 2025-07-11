@@ -250,7 +250,18 @@ Return the response in this exact JSON format:
     async checkAIStatus() {
         try {
             const hasApiKey = !!process.env.GEMINI_API_KEY;
-            const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+            console.log('🔍 Debug: API Key exists:', hasApiKey);
+            
+            if (!hasApiKey) {
+                return {
+                    hasApiKey: false,
+                    isWorking: false,
+                    model: 'gemini-2.0-flash-exp',
+                    error: 'No API key found'
+                };
+            }
+
+            const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
 
             // Test AI connection with a simple prompt
             const testPrompt = 'Say "Hello" in JSON format: {"message": "Hello"}';
@@ -258,19 +269,22 @@ Return the response in this exact JSON format:
             const response = await result.response;
             const text = response.text();
 
+            console.log('🔍 Debug: AI test response:', text);
+
             const isWorking = text.includes('Hello');
 
             return {
                 hasApiKey,
                 isWorking,
-                model: 'gemini-2.5-flash',
+                model: 'gemini-2.0-flash-exp',
                 testResponse: text.substring(0, 100)
             };
         } catch (error) {
+            console.error('🔍 Debug: AI check error:', error.message);
             return {
                 hasApiKey: !!process.env.GEMINI_API_KEY,
                 isWorking: false,
-                model: 'gemini-2.5-flash',
+                model: 'gemini-2.0-flash-exp',
                 error: error.message
             };
         }
