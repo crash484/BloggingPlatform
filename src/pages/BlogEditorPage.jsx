@@ -33,6 +33,8 @@ export default function BlogEditorPage() {
 
     const [newCategory, setNewCategory] = useState('');
     const [isSuggesting, setIsSuggesting] = useState(false);
+    const [hasParticipated, setHasParticipated] = useState(false);
+    const [isCheckingParticipation, setIsCheckingParticipation] = useState(false);
 
     // Predefined categories
     const predefinedCategories = [
@@ -77,6 +79,37 @@ export default function BlogEditorPage() {
             }
         }
     }, [isEditing, currentBlog, currentUser, navigate]);
+
+    // Check if user has already participated in today's challenge
+    useEffect(() => {
+        const checkParticipation = async () => {
+            if (challenge && challenge.challengeId && currentUser && !isEditing) {
+                setIsCheckingParticipation(true);
+                try {
+                    const token = localStorage.getItem('authToken');
+                    const response = await fetch(`http://localhost:5000/api/auth/daily-challenge/${challenge.challengeId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        const hasUserParticipated = data.challenge.participants.some(
+                            participant => participant.user._id === currentUser._id
+                        );
+                        setHasParticipated(hasUserParticipated);
+                    }
+                } catch (error) {
+                    console.error('Error checking participation:', error);
+                } finally {
+                    setIsCheckingParticipation(false);
+                }
+            }
+        };
+
+        checkParticipation();
+    }, [challenge, currentUser, isEditing]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -168,9 +201,9 @@ export default function BlogEditorPage() {
                 toast.success('Blog created successfully!');
 
                 // If this blog was created for a challenge, submit it to the challenge
-                if (challenge && challenge.challengeId && result._id) {
+                if (challenge && challenge.challengeId && result._id && !hasParticipated) {
                     try {
-                        const token = localStorage.getItem('token');
+                        const token = localStorage.getItem('authToken');
                         const response = await fetch('http://localhost:5000/api/auth/daily-challenge/participate', {
                             method: 'POST',
                             headers: {
@@ -186,12 +219,18 @@ export default function BlogEditorPage() {
                             toast.success('🎉 Successfully participated in today\'s challenge!');
                         } else {
                             const errorData = await response.json();
-                            toast.error(`Challenge participation failed: ${errorData.message}`);
+                            if (errorData.message.includes('already participated')) {
+                                toast.error('❌ You have already participated in today\'s challenge. Only one submission per day is allowed.');
+                            } else {
+                                toast.error(`Challenge participation failed: ${errorData.message}`);
+                            }
                         }
                     } catch (challengeError) {
                         console.error('Error participating in challenge:', challengeError);
                         toast.error('Blog created but failed to participate in challenge');
                     }
+                } else if (challenge && hasParticipated) {
+                    toast.success('Blog created successfully! (Not submitted to challenge - you have already participated today)');
                 }
             }
             navigate('/blogs');
@@ -271,12 +310,34 @@ export default function BlogEditorPage() {
 
                 {/* Challenge Banner */}
                 {challenge && !isEditing && (
-                    <div className="mb-8 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl shadow-lg p-6 text-white text-left">
+                    <div className={`mb-8 rounded-2xl shadow-lg p-6 text-white text-left ${hasParticipated
+                        ? 'bg-gradient-to-r from-green-500 to-emerald-500'
+                        : 'bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500'
+                        }`}>
                         <div className="mb-2">
                             <span className="inline-block bg-white/20 px-3 py-1 rounded-lg text-sm font-semibold mr-2">{challenge.category}</span>
+                            {hasParticipated && (
+                                <span className="inline-block bg-green-400 text-green-900 px-3 py-1 rounded-lg text-sm font-semibold">
+                                    ✅ Already Participated
+                                </span>
+                            )}
                         </div>
                         <h2 className="text-2xl font-bold mb-1">Daily Challenge: {challenge.topic}</h2>
                         <p className="text-purple-100">{challenge.description}</p>
+                        {hasParticipated && (
+                            <div className="mt-4 p-3 bg-white/20 rounded-lg">
+                                <p className="text-sm">
+                                    <strong>Note:</strong> You have already participated in today's challenge.
+                                    You can still create a blog, but it won't be submitted to the challenge.
+                                </p>
+                            </div>
+                        )}
+                        {isCheckingParticipation && (
+                            <div className="mt-4 flex items-center gap-2">
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                <span className="text-sm">Checking participation status...</span>
+                            </div>
+                        )}
                     </div>
                 )}
 

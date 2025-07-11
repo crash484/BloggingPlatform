@@ -24,7 +24,7 @@ export default function ChallengeLeaderboardPage() {
         try {
             setLoading(true);
             const response = await fetch(`http://localhost:5000/api/auth/daily-challenge/leaderboard?timeframe=${timeframe}&limit=10`);
-            
+
             if (!response.ok) {
                 throw new Error('Failed to fetch leaderboard');
             }
@@ -41,7 +41,7 @@ export default function ChallengeLeaderboardPage() {
 
     const fetchStats = useCallback(async () => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('authToken');
             if (!token) return;
 
             const response = await fetch('http://localhost:5000/api/auth/daily-challenge/stats', {
@@ -49,7 +49,7 @@ export default function ChallengeLeaderboardPage() {
                     'Authorization': `Bearer ${token}`
                 }
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
                 setStats(data.stats);
@@ -74,7 +74,7 @@ export default function ChallengeLeaderboardPage() {
     const generateUserBadges = (userStats) => {
         const badges = [];
         const userEntry = leaderboard.find(entry => entry.username === currentUser?.name);
-        
+
         if (userEntry) {
             const rank = leaderboard.indexOf(userEntry) + 1;
             const badgeType = getBadgeForRank(rank);
@@ -84,7 +84,7 @@ export default function ChallengeLeaderboardPage() {
                     label: `${badgeType.charAt(0).toUpperCase() + badgeType.slice(1)} Winner (${timeframe === 'all' ? 'All Time' : timeframe.charAt(0).toUpperCase() + timeframe.slice(1)})`
                 });
             }
-            
+
             if (userEntry.challengesCompleted >= 7) {
                 badges.push({
                     type: 'streak',
@@ -92,7 +92,7 @@ export default function ChallengeLeaderboardPage() {
                 });
             }
         }
-        
+
         return badges;
     };
 
@@ -155,11 +155,10 @@ export default function ChallengeLeaderboardPage() {
                             <button
                                 key={period}
                                 onClick={() => setTimeframe(period)}
-                                className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                                    timeframe === period
-                                        ? 'bg-purple-500 text-white'
-                                        : 'text-purple-200 hover:text-white hover:bg-white/10'
-                                }`}
+                                className={`px-4 py-2 rounded-lg font-semibold transition-colors ${timeframe === period
+                                    ? 'bg-purple-500 text-white'
+                                    : 'text-purple-200 hover:text-white hover:bg-white/10'
+                                    }`}
                             >
                                 {period.charAt(0).toUpperCase() + period.slice(1)} Time
                             </button>
@@ -195,13 +194,12 @@ export default function ChallengeLeaderboardPage() {
                                         const rank = index + 1;
                                         const badgeType = getBadgeForRank(rank);
                                         const isCurrentUser = currentUser && entry.username === currentUser.name;
-                                        
+
                                         return (
-                                            <tr 
-                                                key={entry._id} 
-                                                className={`border-b border-white/10 last:border-b-0 hover:bg-white/5 transition-colors ${
-                                                    isCurrentUser ? 'bg-purple-500/20' : ''
-                                                }`}
+                                            <tr
+                                                key={entry._id}
+                                                className={`border-b border-white/10 last:border-b-0 hover:bg-white/5 transition-colors ${isCurrentUser ? 'bg-purple-500/20' : ''
+                                                    }`}
                                             >
                                                 <td className="py-4 font-bold text-xl">
                                                     {rank}
@@ -210,8 +208,8 @@ export default function ChallengeLeaderboardPage() {
                                                 <td className="py-4">
                                                     <div className="flex items-center gap-3">
                                                         {entry.avatarUrl ? (
-                                                            <img 
-                                                                src={entry.avatarUrl} 
+                                                            <img
+                                                                src={entry.avatarUrl}
                                                                 alt={entry.username}
                                                                 className="w-8 h-8 rounded-full border border-white/20"
                                                             />

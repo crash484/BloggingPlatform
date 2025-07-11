@@ -9,8 +9,8 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 class ChallengeService {
     constructor() {
         this.categories = [
-            'Technology', 'Lifestyle', 'Health', 'Science', 'Art', 
-            'Business', 'Education', 'Environment', 'Travel', 
+            'Technology', 'Lifestyle', 'Health', 'Science', 'Art',
+            'Business', 'Education', 'Environment', 'Travel',
             'Food', 'Sports', 'Politics', 'Entertainment'
         ];
         this.difficulties = ['Easy', 'Medium', 'Hard'];
@@ -19,11 +19,21 @@ class ChallengeService {
     // Generate a daily challenge using AI
     async generateDailyChallenge(specificCategory = null) {
         try {
-            const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
-            
+            console.log('🤖 Starting AI challenge generation...');
+
+            // Check if GEMINI_API_KEY is available
+            if (!process.env.GEMINI_API_KEY) {
+                console.log('❌ GEMINI_API_KEY not found in environment variables, using fallback');
+                return this.getFallbackChallenge(specificCategory);
+            }
+
+            const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
             const category = specificCategory || this.getRandomCategory();
             const difficulty = this.getRandomDifficulty();
-            
+
+            console.log(`🎯 Generating challenge for category: ${category}, difficulty: ${difficulty}`);
+
             const prompt = `Generate a unique and engaging daily blog writing challenge for the category "${category}" with "${difficulty}" difficulty level.
 
 Requirements:
@@ -40,26 +50,34 @@ Return the response in this exact JSON format:
     "tags": ["tag1", "tag2", "tag3"]
 }`;
 
+            console.log('📤 Sending request to Gemini AI...');
             const result = await model.generateContent(prompt);
             const response = await result.response;
             const text = response.text();
-            
+
+            console.log('📥 Received AI response:', text.substring(0, 200) + '...');
+
             // Parse the JSON response
             let challengeData;
+            let isAIGenerated = true;
+
             try {
                 // Extract JSON from the response (remove any markdown formatting)
                 const jsonMatch = text.match(/\{[\s\S]*\}/);
                 if (jsonMatch) {
                     challengeData = JSON.parse(jsonMatch[0]);
+                    console.log('✅ Successfully parsed AI-generated challenge:', challengeData.topic);
                 } else {
                     throw new Error('No JSON found in response');
                 }
             } catch (parseError) {
-                console.log('Failed to parse AI response, using fallback');
+                console.log('❌ Failed to parse AI response, using fallback');
+                console.log('Parse error:', parseError.message);
                 challengeData = this.getFallbackChallenge(category);
+                isAIGenerated = false;
             }
 
-            return {
+            const challengeResult = {
                 topic: challengeData.topic,
                 category: category,
                 description: challengeData.description,
@@ -68,12 +86,18 @@ Return the response in this exact JSON format:
                 metadata: {
                     promptUsed: prompt,
                     generatedAt: new Date(),
-                    aiModel: 'gemini-2.0-flash-exp'
+                    aiModel: 'gemini-2.5-flash',
+                    isAIGenerated: isAIGenerated,
+                    aiResponse: isAIGenerated ? text : null
                 }
             };
 
+            console.log(`🎉 Challenge generation ${isAIGenerated ? 'SUCCESS (AI)' : 'FALLBACK (Predefined)'}:`, challengeResult.topic);
+            return challengeResult;
+
         } catch (error) {
-            console.error('Error generating challenge with AI:', error);
+            console.error('❌ Error generating challenge with AI:', error.message);
+            console.log('🔄 Falling back to predefined challenge...');
             // Fallback to predefined challenges
             return this.getFallbackChallenge(specificCategory);
         }
@@ -82,31 +106,49 @@ Return the response in this exact JSON format:
     // Create and save today's challenge
     async createTodaysChallenge() {
         try {
+            console.log('📅 Checking for today\'s challenge...');
+
             // Check if today's challenge already exists
             const existingChallenge = await Challenge.getTodaysChallenge();
             if (existingChallenge) {
+                console.log('✅ Today\'s challenge already exists:', existingChallenge.topic);
+                console.log('📊 Challenge details:', {
+                    createdBy: existingChallenge.createdBy,
+                    isAIGenerated: existingChallenge.metadata?.isAIGenerated || false,
+                    category: existingChallenge.category,
+                    difficulty: existingChallenge.difficulty
+                });
                 return existingChallenge;
             }
 
+            console.log('🆕 No challenge found for today, creating new one...');
+
             // Generate new challenge
             const challengeData = await this.generateDailyChallenge();
-            
+
             // Set the date to today
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            
+
             const challenge = new Challenge({
                 ...challengeData,
                 date: today,
-                createdBy: 'AI'
+                createdBy: challengeData.metadata?.isAIGenerated ? 'AI' : 'Fallback'
             });
 
             const savedChallenge = await challenge.save();
-            console.log('Daily challenge created:', savedChallenge.topic);
+            console.log('💾 Daily challenge saved to database:', savedChallenge.topic);
+            console.log('📊 Final challenge details:', {
+                createdBy: savedChallenge.createdBy,
+                isAIGenerated: savedChallenge.metadata?.isAIGenerated || false,
+                category: savedChallenge.category,
+                difficulty: savedChallenge.difficulty,
+                tags: savedChallenge.tags
+            });
             return savedChallenge;
 
         } catch (error) {
-            console.error('Error creating today\'s challenge:', error);
+            console.error('❌ Error creating today\'s challenge:', error);
             throw error;
         }
     }
@@ -175,21 +217,62 @@ Return the response in this exact JSON format:
             const totalChallenges = await Challenge.countDocuments();
             const activeChallenges = await Challenge.countDocuments({ isActive: true });
             const todaysChallenge = await Challenge.getTodaysChallenge();
-            
+
             const participationStats = await Challenge.aggregate([
                 { $unwind: '$participants' },
                 { $group: { _id: null, totalParticipants: { $sum: 1 } } }
             ]);
 
+            // Get AI generation statistics
+            const aiGeneratedChallenges = await Challenge.countDocuments({
+                'metadata.isAIGenerated': true
+            });
+            const fallbackChallenges = await Challenge.countDocuments({
+                'metadata.isAIGenerated': false
+            });
+
             return {
                 totalChallenges,
                 activeChallenges,
                 todaysChallenge: todaysChallenge ? true : false,
-                totalParticipations: participationStats.length > 0 ? participationStats[0].totalParticipants : 0
+                totalParticipations: participationStats.length > 0 ? participationStats[0].totalParticipants : 0,
+                aiGeneratedChallenges,
+                fallbackChallenges,
+                aiSuccessRate: totalChallenges > 0 ? Math.round((aiGeneratedChallenges / totalChallenges) * 100) : 0
             };
         } catch (error) {
             console.error('Error getting challenge stats:', error);
             throw error;
+        }
+    }
+
+    // Check AI service status
+    async checkAIStatus() {
+        try {
+            const hasApiKey = !!process.env.GEMINI_API_KEY;
+            const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+            // Test AI connection with a simple prompt
+            const testPrompt = 'Say "Hello" in JSON format: {"message": "Hello"}';
+            const result = await model.generateContent(testPrompt);
+            const response = await result.response;
+            const text = response.text();
+
+            const isWorking = text.includes('Hello');
+
+            return {
+                hasApiKey,
+                isWorking,
+                model: 'gemini-2.5-flash',
+                testResponse: text.substring(0, 100)
+            };
+        } catch (error) {
+            return {
+                hasApiKey: !!process.env.GEMINI_API_KEY,
+                isWorking: false,
+                model: 'gemini-2.5-flash',
+                error: error.message
+            };
         }
     }
 
@@ -336,7 +419,7 @@ Return the response in this exact JSON format:
             }
 
             // Verify the user participated in this challenge
-            const participant = challenge.participants.find(p => 
+            const participant = challenge.participants.find(p =>
                 p.user.toString() === userId && p.blog.toString() === blogId
             );
 
@@ -365,7 +448,7 @@ Return the response in this exact JSON format:
     async getChallengeWinners(timeframe = 'all', limit = 10) {
         try {
             let dateFilter = {};
-            
+
             if (timeframe === 'week') {
                 const oneWeekAgo = new Date();
                 oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
@@ -380,10 +463,10 @@ Return the response in this exact JSON format:
                 status: 'winner_selected',
                 ...dateFilter
             })
-            .populate('winner.user', 'username email')
-            .populate('winner.blog', 'title')
-            .sort({ 'winner.selectedAt': -1 })
-            .limit(limit);
+                .populate('winner.user', 'username email')
+                .populate('winner.blog', 'title')
+                .sort({ 'winner.selectedAt': -1 })
+                .limit(limit);
 
             return winners;
 
@@ -432,7 +515,7 @@ Return the response in this exact JSON format:
             const yesterday = new Date();
             yesterday.setDate(yesterday.getDate() - 1);
             yesterday.setHours(0, 0, 0, 0);
-            
+
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 

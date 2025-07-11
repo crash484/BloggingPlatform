@@ -123,6 +123,25 @@ export default function DashboardPage() {
                     </div>
                 </div>
 
+                {/* Admin Dashboard Link */}
+                {currentUser.role === 'admin' && (
+                    <div className="mb-8 bg-gradient-to-r from-red-500 to-pink-500 rounded-2xl p-6 border border-white/20">
+                        <div className="text-center">
+                            <div className="text-4xl mb-4">👑</div>
+                            <h3 className="text-2xl font-bold text-white mb-2">Admin Dashboard</h3>
+                            <p className="text-white/80 mb-4">
+                                Access admin tools, monitor AI challenge generation, and manage users
+                            </p>
+                            <button
+                                onClick={() => navigate('/admin')}
+                                className="bg-white/20 text-white font-bold px-6 py-3 rounded-xl hover:bg-white/30 transition-all duration-300"
+                            >
+                                Go to Admin Dashboard
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* Quick Actions */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
                     <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">

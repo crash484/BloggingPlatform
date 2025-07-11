@@ -87,6 +87,26 @@ router.post('/verify', verifyToken, (req, res) => {
     res.json({ message: "user is verified" });
 })
 
+// Debug endpoint to check user role
+router.get('/debug/user-role', verifyToken, async (req, res) => {
+    try {
+        const currentUserId = req.user.id;
+        const currentUser = await User.findById(currentUserId);
+
+        res.json({
+            message: "User role debug info",
+            userId: currentUserId,
+            userFound: !!currentUser,
+            userRole: currentUser?.role,
+            userEmail: currentUser?.email,
+            userUsername: currentUser?.username
+        });
+    } catch (err) {
+        console.log("Error in debug endpoint:", err.message);
+        res.status(500).json({ message: "Internal server error" });
+    }
+})
+
 //path to to retrieve all blogs
 router.get("/blogs", async (req, res) => {
     try {
@@ -530,7 +550,7 @@ router.get("/daily-challenge/leaderboard", async (req, res) => {
 router.get("/daily-challenge/stats", verifyToken, async (req, res) => {
     try {
         const stats = await ChallengeService.getChallengeStats();
-        
+
         return res.status(200).json({
             message: "Challenge statistics retrieved successfully",
             stats: stats
@@ -538,6 +558,49 @@ router.get("/daily-challenge/stats", verifyToken, async (req, res) => {
 
     } catch (err) {
         console.log("Error fetching challenge stats:", err.message);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+// Check AI service status and challenge generation details (admin only)
+router.get("/admin/daily-challenge/ai-status", verifyToken, async (req, res) => {
+    try {
+        const currentUserId = req.user.id;
+        console.log('🔍 Debug: Admin check - User ID:', currentUserId);
+
+        // Check if current user is admin
+        const currentUser = await User.findById(currentUserId);
+        console.log('🔍 Debug: Admin check - Found user:', currentUser ? 'Yes' : 'No');
+        console.log('🔍 Debug: Admin check - User role:', currentUser?.role);
+
+        if (!currentUser || currentUser.role !== 'admin') {
+            console.log('🔍 Debug: Admin check - Access denied. User role:', currentUser?.role);
+            return res.status(403).json({ message: "Only admins can check AI status" });
+        }
+
+        const aiStatus = await ChallengeService.checkAIStatus();
+        const stats = await ChallengeService.getChallengeStats();
+
+        // Get today's challenge details
+        const todaysChallenge = await Challenge.getTodaysChallenge();
+
+        return res.status(200).json({
+            message: "AI status and challenge details retrieved successfully",
+            aiStatus: aiStatus,
+            stats: stats,
+            todaysChallenge: todaysChallenge ? {
+                topic: todaysChallenge.topic,
+                category: todaysChallenge.category,
+                difficulty: todaysChallenge.difficulty,
+                createdBy: todaysChallenge.createdBy,
+                isAIGenerated: todaysChallenge.metadata?.isAIGenerated || false,
+                createdAt: todaysChallenge.createdAt,
+                participants: todaysChallenge.participants?.length || 0
+            } : null
+        });
+
+    } catch (err) {
+        console.log("Error checking AI status:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -576,8 +639,8 @@ router.post("/daily-challenge/participate", verifyToken, async (req, res) => {
 
         // Add participation
         const updatedChallenge = await ChallengeService.addParticipation(
-            todaysChallenge._id, 
-            userId, 
+            todaysChallenge._id,
+            userId,
             blogId
         );
 
@@ -822,7 +885,7 @@ router.post("/admin/daily-challenge/:id/select-winner", verifyToken, async (req,
 router.get("/daily-challenge/winners", async (req, res) => {
     try {
         const { timeframe = 'all', limit = 10 } = req.query;
-        
+
         const winners = await ChallengeService.getChallengeWinners(timeframe, parseInt(limit));
 
         return res.status(200).json({
@@ -841,7 +904,7 @@ router.get("/daily-challenge/winners", async (req, res) => {
 router.get("/daily-challenge/:id/details", async (req, res) => {
     try {
         const { id } = req.params;
-        
+
         const challenge = await Challenge.findById(id)
             .populate('participants.user', 'username email')
             .populate('participants.blog', 'title content likes createdAt')

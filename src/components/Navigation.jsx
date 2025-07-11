@@ -62,6 +62,17 @@ export default function Navigation() {
                         >
                             Leaderboard
                         </Link>
+                        {currentUser.role === 'admin' && (
+                            <Link
+                                to="/admin"
+                                className={`px-3 py-2 rounded-lg font-medium transition-colors ${isActive('/admin')
+                                    ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white'
+                                    : 'text-red-200 hover:text-white hover:bg-red-500/20'
+                                    }`}
+                            >
+                                👑 Admin
+                            </Link>
+                        )}
                         <Link
                             to={`/profile/${currentUser._id}`}
                             className={`px-3 py-2 rounded-lg font-medium transition-colors ${location.pathname.startsWith('/profile/')
