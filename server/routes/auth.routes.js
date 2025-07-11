@@ -443,9 +443,6 @@ router.get("/admin", verifyToken, async (req, res) => {
     }
 });
 
-// =============================================================================
-// DAILY CHALLENGE ENDPOINTS
-// =============================================================================
 
 // Get today's daily challenge
 router.get("/daily-challenge", async (req, res) => {
@@ -571,6 +568,12 @@ router.post("/daily-challenge/participate", verifyToken, async (req, res) => {
             todaysChallenge = await ChallengeService.createTodaysChallenge();
         }
 
+        // Mark the blog as a challenge submission
+        await Blog.findByIdAndUpdate(blogId, {
+            isChallengeSubmission: true,
+            challenge: todaysChallenge._id
+        });
+
         // Add participation
         const updatedChallenge = await ChallengeService.addParticipation(
             todaysChallenge._id, 
@@ -638,6 +641,12 @@ router.post("/daily-challenge/participate", verifyToken, async (req, res) => {
         if (!todaysChallenge) {
             todaysChallenge = await ChallengeService.createTodaysChallenge();
         }
+
+        // Mark the blog as a challenge submission
+        await Blog.findByIdAndUpdate(blogId, {
+            isChallengeSubmission: true,
+            challenge: todaysChallenge._id
+        });
 
         // Add participation
         const updatedChallenge = await ChallengeService.addParticipation(
@@ -773,6 +782,155 @@ router.post("/admin/daily-challenge/generate", verifyToken, async (req, res) => 
 
     } catch (err) {
         console.log("Error generating challenge:", err.message);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+// Select winner for a challenge (admin only)
+router.post("/admin/daily-challenge/:id/select-winner", verifyToken, async (req, res) => {
+    try {
+        const currentUserId = req.user.id;
+        const { id: challengeId } = req.params;
+        const { method = 'likes', userId, blogId } = req.body;
+
+        // Check if current user is admin
+        const currentUser = await User.findById(currentUserId);
+        if (!currentUser || currentUser.role !== 'admin') {
+            return res.status(403).json({ message: "Only admins can select winners" });
+        }
+
+        let updatedChallenge;
+
+        if (method === 'manual' && userId && blogId) {
+            updatedChallenge = await ChallengeService.selectWinnerManually(challengeId, userId, blogId);
+        } else {
+            updatedChallenge = await ChallengeService.selectWinner(challengeId, method);
+        }
+
+        return res.status(200).json({
+            message: "Winner selected successfully",
+            challenge: updatedChallenge
+        });
+
+    } catch (err) {
+        console.log("Error selecting winner:", err.message);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+// Get challenge winners (leaderboard)
+router.get("/daily-challenge/winners", async (req, res) => {
+    try {
+        const { timeframe = 'all', limit = 10 } = req.query;
+        
+        const winners = await ChallengeService.getChallengeWinners(timeframe, parseInt(limit));
+
+        return res.status(200).json({
+            message: "Winners retrieved successfully",
+            winners: winners,
+            timeframe: timeframe
+        });
+
+    } catch (err) {
+        console.log("Error fetching winners:", err.message);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+// Get challenge details with participants and winner
+router.get("/daily-challenge/:id/details", async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const challenge = await Challenge.findById(id)
+            .populate('participants.user', 'username email')
+            .populate('participants.blog', 'title content likes createdAt')
+            .populate('winner.user', 'username email')
+            .populate('winner.blog', 'title content likes');
+
+        if (!challenge) {
+            return res.status(404).json({ message: "Challenge not found" });
+        }
+
+        return res.status(200).json({
+            message: "Challenge details retrieved successfully",
+            challenge: challenge
+        });
+
+    } catch (err) {
+        console.log("Error fetching challenge details:", err.message);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+// End yesterday's challenges (admin only)
+router.post("/admin/daily-challenge/end-yesterday", verifyToken, async (req, res) => {
+    try {
+        const currentUserId = req.user.id;
+
+        // Check if current user is admin
+        const currentUser = await User.findById(currentUserId);
+        if (!currentUser || currentUser.role !== 'admin') {
+            return res.status(403).json({ message: "Only admins can end challenges" });
+        }
+
+        const results = await ChallengeService.endYesterdaysChallenges();
+
+        return res.status(200).json({
+            message: "Yesterday's challenges ended successfully",
+            results: results
+        });
+
+    } catch (err) {
+        console.log("Error ending yesterday's challenges:", err.message);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+// Auto-select winners for ended challenges (admin only)
+router.post("/admin/daily-challenge/auto-select-winners", verifyToken, async (req, res) => {
+    try {
+        const currentUserId = req.user.id;
+
+        // Check if current user is admin
+        const currentUser = await User.findById(currentUserId);
+        if (!currentUser || currentUser.role !== 'admin') {
+            return res.status(403).json({ message: "Only admins can auto-select winners" });
+        }
+
+        const results = await ChallengeService.autoSelectWinners();
+
+        return res.status(200).json({
+            message: "Winners auto-selected successfully",
+            results: results
+        });
+
+    } catch (err) {
+        console.log("Error auto-selecting winners:", err.message);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+// Get challenges that need winner selection (admin only)
+router.get("/admin/daily-challenge/needs-winners", verifyToken, async (req, res) => {
+    try {
+        const currentUserId = req.user.id;
+
+        // Check if current user is admin
+        const currentUser = await User.findById(currentUserId);
+        if (!currentUser || currentUser.role !== 'admin') {
+            return res.status(403).json({ message: "Only admins can access this endpoint" });
+        }
+
+        const challenges = await Challenge.getChallengesNeedingWinners();
+
+        return res.status(200).json({
+            message: "Challenges needing winners retrieved successfully",
+            challenges: challenges
+        });
+
+    } catch (err) {
+        console.log("Error fetching challenges needing winners:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 });
