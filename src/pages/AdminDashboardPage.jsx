@@ -109,7 +109,7 @@ export default function AdminDashboardPage() {
                 {/* AI Status Section */}
                 {aiStatus && (
                     <div className="mb-8 bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-8">
-                        <h2 className="text-2xl font-bold text-white mb-6">🤖 AI Challenge Generation Status</h2>
+                        <h2 className="text-2xl font-bold text-white mb-6">Challenge Generation Status</h2>
 
                         {/* Today's Challenge Details */}
                         {aiStatus.todaysChallenge && (
@@ -129,12 +129,6 @@ export default function AdminDashboardPage() {
                                         <p className="text-white font-semibold">{aiStatus.todaysChallenge.difficulty}</p>
                                     </div>
                                     <div>
-                                        <p className="text-purple-200 text-sm">Generation Method</p>
-                                        <div className={`font-semibold ${aiStatus.todaysChallenge.isAIGenerated ? 'text-green-400' : 'text-yellow-400'}`}>
-                                            {aiStatus.todaysChallenge.isAIGenerated ? '🤖 AI Generated' : '📝 Fallback Challenge'}
-                                        </div>
-                                    </div>
-                                    <div>
                                         <p className="text-purple-200 text-sm">Participants</p>
                                         <p className="text-white font-semibold">{aiStatus.todaysChallenge.participants}</p>
                                     </div>
@@ -149,15 +143,7 @@ export default function AdminDashboardPage() {
                         )}
 
                         {/* Challenge Statistics */}
-                        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="bg-white/20 rounded-xl p-4 text-center">
-                                <div className="text-2xl font-bold text-white">{aiStatus.stats?.aiGeneratedChallenges || 0}</div>
-                                <div className="text-purple-200 text-sm">AI Generated</div>
-                            </div>
-                            <div className="bg-white/20 rounded-xl p-4 text-center">
-                                <div className="text-2xl font-bold text-white">{aiStatus.stats?.fallbackChallenges || 0}</div>
-                                <div className="text-purple-200 text-sm">Fallback Used</div>
-                            </div>
+                        <div className="mt-6 grid grid-cols-1 gap-4">
                             <div className="bg-white/20 rounded-xl p-4 text-center">
                                 <div className="text-2xl font-bold text-white">{aiStatus.stats?.totalChallenges || 0}</div>
                                 <div className="text-purple-200 text-sm">Total Challenges</div>
