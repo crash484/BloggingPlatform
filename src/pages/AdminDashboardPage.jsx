@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -12,19 +12,14 @@ export default function AdminDashboardPage() {
     const [aiStatus, setAiStatus] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        if (!currentUser || currentUser.role !== 'admin') {
-            navigate('/dashboard');
-            return;
-        }
-
-        fetchAdminData();
-    }, [currentUser, navigate]);
-
-    const fetchAdminData = async () => {
+    const fetchAdminData = useCallback(async () => {
         try {
             setLoading(true);
             const token = localStorage.getItem('authToken');
+            
+            console.log('🔍 Debug: Fetching admin data...');
+            console.log('🔍 Debug: Current user:', currentUser);
+            console.log('🔍 Debug: Token exists:', !!token);
 
             // Fetch user statistics
             const usersResponse = await fetch('http://localhost:5000/api/auth/admin', {
@@ -33,9 +28,16 @@ export default function AdminDashboardPage() {
                 }
             });
 
+            console.log('🔍 Debug: Users response status:', usersResponse.status);
+            
             if (usersResponse.ok) {
                 const usersData = await usersResponse.json();
+                console.log('🔍 Debug: Users data received:', usersData);
                 setUserStats(usersData);
+            } else {
+                const errorData = await usersResponse.json();
+                console.error('🔍 Debug: Users error:', errorData);
+                toast.error(`Failed to load users: ${errorData.message}`);
             }
 
             // Fetch AI status and challenge details
@@ -45,21 +47,34 @@ export default function AdminDashboardPage() {
                 }
             });
 
+            console.log('🔍 Debug: AI response status:', aiResponse.status);
+
             if (aiResponse.ok) {
                 const aiData = await aiResponse.json();
+                console.log('🔍 Debug: AI data received:', aiData);
                 setAiStatus(aiData);
             } else {
                 const errorData = await aiResponse.json();
+                console.error('🔍 Debug: AI error:', errorData);
                 toast.error(`Admin access denied: ${errorData.message}`);
             }
 
         } catch (error) {
-            console.error('Error fetching admin data:', error);
+            console.error('🔍 Debug: Error fetching admin data:', error);
             toast.error('Failed to load admin data');
         } finally {
             setLoading(false);
         }
-    };
+    }, [currentUser]);
+
+    useEffect(() => {
+        if (!currentUser || currentUser.role !== 'admin') {
+            navigate('/dashboard');
+            return;
+        }
+
+        fetchAdminData();
+    }, [currentUser, navigate, fetchAdminData]);
 
     if (!currentUser || currentUser.role !== 'admin') {
         return (
@@ -67,12 +82,8 @@ export default function AdminDashboardPage() {
                 <div className="text-white text-center">
                     <h2 className="text-2xl font-bold mb-4">Access Denied</h2>
                     <p className="mb-4">You don't have permission to access this page.</p>
-                    <button
-                        onClick={() => navigate('/dashboard')}
-                        className="bg-gradient-to-r from-pink-500 to-indigo-500 px-6 py-2 rounded-lg hover:scale-105 transition-transform"
-                    >
-                        Back to Dashboard
-                    </button>
+                    <p className="mb-4 text-sm text-purple-200">Current role: {currentUser?.role || 'Not logged in'}</p>
+
                 </div>
             </div>
         );
@@ -214,4 +225,4 @@ export default function AdminDashboardPage() {
             </div>
         </div>
     );
-} 
+}
