@@ -36,7 +36,7 @@ const challengeSchema = new mongoose.Schema({
     },
     createdBy: {
         type: String,
-        enum: ['AI', 'Admin'],
+        enum: ['AI', 'Admin', 'Fallback'],
         default: 'AI'
     },
     participants: [{
@@ -71,8 +71,7 @@ const challengeSchema = new mongoose.Schema({
         },
         selectionMethod: {
             type: String,
-            enum: ['likes', 'random', 'manual', 'ai_scoring'],
-            default: null
+            enum: ['likes', 'random', 'manual', 'ai_scoring']
         },
         score: {
             type: Number,
