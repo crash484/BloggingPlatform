@@ -87,8 +87,9 @@ export default function BlogEditorPage() {
                 setIsCheckingParticipation(true);
                 try {
                     const token = localStorage.getItem('authToken');
-                    const response = await fetch(`http://localhost:5000/api/auth/daily-challenge/${challenge.challengeId}`, {
-                        headers: {
+                    const response = await fetch(`https://bloggingplatform-production.up.railway.app/api/auth/daily-challenge/${challenge.challengeId}`, {
+                        headers:
+                        {
                             'Authorization': `Bearer ${token}`
                         }
                     });
@@ -101,7 +102,7 @@ export default function BlogEditorPage() {
                         setHasParticipated(hasUserParticipated);
                     }
                 } catch (error) {
-                    console.error('Error checking participation:', error);
+                    // Error handled silently
                 } finally {
                     setIsCheckingParticipation(false);
                 }
@@ -204,7 +205,7 @@ export default function BlogEditorPage() {
                 if (challenge && challenge.challengeId && result._id && !hasParticipated) {
                     try {
                         const token = localStorage.getItem('authToken');
-                        const response = await fetch('http://localhost:5000/api/auth/daily-challenge/participate', {
+                        const response = await fetch('https://bloggingplatform-production.up.railway.app/api/auth/daily-challenge/participate', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -226,7 +227,6 @@ export default function BlogEditorPage() {
                             }
                         }
                     } catch (challengeError) {
-                        console.error('Error participating in challenge:', challengeError);
                         toast.error('Blog created but failed to participate in challenge');
                     }
                 } else if (challenge && hasParticipated) {
@@ -525,4 +525,4 @@ export default function BlogEditorPage() {
             </div>
         </div>
     );
-} 
+}

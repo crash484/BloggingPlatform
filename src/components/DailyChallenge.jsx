@@ -15,7 +15,7 @@ export default function DailyChallenge() {
     const fetchTodaysChallenge = async () => {
         try {
             setLoading(true);
-            const response = await fetch('http://localhost:5000/api/auth/daily-challenge');
+            const response = await fetch('https://bloggingplatform-production.up.railway.app/api/auth/daily-challenge');
             
             if (!response.ok) {
                 throw new Error('Failed to fetch today\'s challenge');
@@ -24,7 +24,6 @@ export default function DailyChallenge() {
             const data = await response.json();
             setChallenge(data.challenge);
         } catch (err) {
-            console.error('Error fetching challenge:', err);
             setError(err.message);
             toast.error('Failed to load today\'s challenge');
         } finally {
@@ -119,4 +118,4 @@ export default function DailyChallenge() {
             </div>
         </div>
     );
-} 
+}

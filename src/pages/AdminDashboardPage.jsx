@@ -16,51 +16,38 @@ export default function AdminDashboardPage() {
         try {
             setLoading(true);
             const token = localStorage.getItem('authToken');
-            
-            console.log('🔍 Debug: Fetching admin data...');
-            console.log('🔍 Debug: Current user:', currentUser);
-            console.log('🔍 Debug: Token exists:', !!token);
 
             // Fetch user statistics
-            const usersResponse = await fetch('http://localhost:5000/api/auth/admin', {
+            const usersResponse = await fetch('https://bloggingplatform-production.up.railway.app/api/auth/admin', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
-
-            console.log('🔍 Debug: Users response status:', usersResponse.status);
             
             if (usersResponse.ok) {
                 const usersData = await usersResponse.json();
-                console.log('🔍 Debug: Users data received:', usersData);
                 setUserStats(usersData);
             } else {
                 const errorData = await usersResponse.json();
-                console.error('🔍 Debug: Users error:', errorData);
                 toast.error(`Failed to load users: ${errorData.message}`);
             }
 
             // Fetch AI status and challenge details
-            const aiResponse = await fetch('http://localhost:5000/api/auth/admin/daily-challenge/ai-status', {
+            const aiResponse = await fetch('https://bloggingplatform-production.up.railway.app/api/auth/admin/daily-challenge/ai-status', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
 
-            console.log('🔍 Debug: AI response status:', aiResponse.status);
-
             if (aiResponse.ok) {
                 const aiData = await aiResponse.json();
-                console.log('🔍 Debug: AI data received:', aiData);
                 setAiStatus(aiData);
             } else {
                 const errorData = await aiResponse.json();
-                console.error('🔍 Debug: AI error:', errorData);
                 toast.error(`Admin access denied: ${errorData.message}`);
             }
 
         } catch (error) {
-            console.error('🔍 Debug: Error fetching admin data:', error);
             toast.error('Failed to load admin data');
         } finally {
             setLoading(false);

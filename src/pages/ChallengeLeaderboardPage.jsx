@@ -23,7 +23,7 @@ export default function ChallengeLeaderboardPage() {
     const fetchLeaderboard = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await fetch(`http://localhost:5000/api/auth/daily-challenge/leaderboard?timeframe=${timeframe}&limit=10`);
+            const response = await fetch(`https://bloggingplatform-production.up.railway.app/api/auth/daily-challenge/leaderboard?timeframe=${timeframe}&limit=10`);
 
             if (!response.ok) {
                 throw new Error('Failed to fetch leaderboard');
@@ -32,7 +32,6 @@ export default function ChallengeLeaderboardPage() {
             const data = await response.json();
             setLeaderboard(data.leaderboard);
         } catch (error) {
-            console.error('Error fetching leaderboard:', error);
             toast.error('Failed to load leaderboard');
         } finally {
             setLoading(false);
@@ -44,7 +43,7 @@ export default function ChallengeLeaderboardPage() {
             const token = localStorage.getItem('authToken');
             if (!token) return;
 
-            const response = await fetch('http://localhost:5000/api/auth/daily-challenge/stats', {
+            const response = await fetch('https://bloggingplatform-production.up.railway.app/api/auth/daily-challenge/stats', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -55,7 +54,7 @@ export default function ChallengeLeaderboardPage() {
                 setStats(data.stats);
             }
         } catch (error) {
-            console.error('Error fetching stats:', error);
+            // Error handled silently
         }
     }, []);
 
@@ -265,4 +264,4 @@ export default function ChallengeLeaderboardPage() {
             </div>
         </div>
     );
-} 
+}
