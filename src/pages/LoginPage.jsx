@@ -38,7 +38,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("https://bloggingplatform-production.up.railway.app/api/auth/login",
+      const response = await fetch("https://bloggingplatform.up.railway.app/api/auth/login",
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
