@@ -33,7 +33,6 @@ router.post("/register", async (req, res) => {
         else return res.status(403).json({ message: "unable to register user" });
 
     } catch (err) {
-        console.log("error in registering ", err.message);//remove in production
         return res.status(500).json({ message: "internal server error" });
     }
 })
@@ -59,7 +58,6 @@ router.post("/login", async (req, res) => {
 
             jwt.sign(payload, key, { expiresIn: '1h' }, (err, token) => {
                 if (err) {
-                    console.log("JWT signing error:", err);
                     return res.status(500).json({ message: "Error generating token" });
                 }
 
@@ -78,7 +76,6 @@ router.post("/login", async (req, res) => {
             return res.status(401).json({ message: "invalid password" });
         }
     } catch (err) {
-        console.log("error in login backend ", err.message);
         return res.status(500).json({ message: "internal server error" });
     }
 })
@@ -114,7 +111,6 @@ router.get("/blogs", async (req, res) => {
         const blogs = await Blog.find().populate('author', 'username email').sort({ createdAt: -1 });
         return res.status(200).json(blogs);
     } catch (err) {
-        console.log("Error fetching blogs:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 })
@@ -130,7 +126,6 @@ router.get("/blogs/:id", async (req, res) => {
         }
         return res.status(200).json(blog);
     } catch (err) {
-        console.log("Error fetching blog:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 })
@@ -141,9 +136,6 @@ router.post("/blogs", verifyToken, async (req, res) => {
         //get user id and then create a blog object and add the user id to it
         const userId = req.user.id; //this will get user id
         const { title, content, imageUrl, categories } = req.body; // Extract title, content, image, and categories from req.body
-
-        console.log("User ID:", userId);
-        console.log("Blog data:", { title, content, imageUrl, categories });
 
         if (!title || !content) {
             return res.status(400).json({ message: "Title and content are required" });
@@ -168,7 +160,6 @@ router.post("/blogs", verifyToken, async (req, res) => {
         return res.status(201).json(populatedBlog);
 
     } catch (err) {
-        console.log("Error creating blog:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 })
@@ -176,7 +167,6 @@ router.post("/blogs", verifyToken, async (req, res) => {
 //path to update blog
 router.put("/blogs/:id", verifyToken, async (req, res) => {
     try {
-        console.log("Received update data:", req.body); // Debug log
         const { id } = req.params;
         const { title, content, imageUrl, categories } = req.body;
         const userId = req.user.id;
@@ -223,7 +213,6 @@ router.put("/blogs/:id", verifyToken, async (req, res) => {
         return res.status(200).json(updatedBlog);
 
     } catch (err) {
-        console.log("Error updating blog:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 })
@@ -251,7 +240,6 @@ router.delete("/blogs/:id", verifyToken, async (req, res) => {
         return res.status(200).json({ message: "Blog deleted successfully" });
 
     } catch (err) {
-        console.log("Error deleting blog:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 })
@@ -295,7 +283,6 @@ router.post("/blogs/:id/comments", verifyToken, async (req, res) => {
         return res.status(201).json(populatedComment);
 
     } catch (err) {
-        console.log("Error creating comment:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 })
@@ -339,7 +326,6 @@ router.post("/blogs/:id/like", verifyToken, async (req, res) => {
         return res.status(200).json(updatedBlog);
 
     } catch (err) {
-        console.log("Error toggling like:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 })
@@ -379,7 +365,6 @@ router.put("/admin/users/:id/role", verifyToken, async (req, res) => {
         });
 
     } catch (err) {
-        console.log("Error updating user role:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -458,7 +443,6 @@ router.get("/admin", verifyToken, async (req, res) => {
         });
 
     } catch (err) {
-        console.log("Error fetching user statistics:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -480,7 +464,6 @@ router.get("/daily-challenge", async (req, res) => {
         });
 
     } catch (err) {
-        console.log("Error fetching today's challenge:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -541,7 +524,6 @@ router.get("/daily-challenge/leaderboard", async (req, res) => {
         });
 
     } catch (err) {
-        console.log("Error fetching leaderboard:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -557,7 +539,6 @@ router.get("/daily-challenge/stats", verifyToken, async (req, res) => {
         });
 
     } catch (err) {
-        console.log("Error fetching challenge stats:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -566,29 +547,19 @@ router.get("/daily-challenge/stats", verifyToken, async (req, res) => {
 router.get("/admin/daily-challenge/ai-status", verifyToken, async (req, res) => {
     try {
         const currentUserId = req.user.id;
-        console.log('🔍 Debug: Admin check - User ID:', currentUserId);
 
         // Check if current user is admin
         const currentUser = await User.findById(currentUserId);
-        console.log('🔍 Debug: Admin check - Found user:', currentUser ? 'Yes' : 'No');
-        console.log('🔍 Debug: Admin check - User role:', currentUser?.role);
 
         if (!currentUser || currentUser.role !== 'admin') {
-            console.log('🔍 Debug: Admin check - Access denied. User role:', currentUser?.role);
             return res.status(403).json({ message: "Only admins can check AI status" });
         }
 
-        console.log('🔍 Debug: Admin verified, fetching AI status...');
-
         const aiStatus = await ChallengeService.checkAIStatus();
-        console.log('🔍 Debug: AI status result:', aiStatus);
-        
         const stats = await ChallengeService.getChallengeStats();
-        console.log('🔍 Debug: Challenge stats result:', stats);
 
         // Get today's challenge details
         const todaysChallenge = await Challenge.getTodaysChallenge();
-        console.log('🔍 Debug: Today\'s challenge:', todaysChallenge ? 'Found' : 'Not found');
 
         return res.status(200).json({
             message: "AI status and challenge details retrieved successfully",
@@ -606,7 +577,6 @@ router.get("/admin/daily-challenge/ai-status", verifyToken, async (req, res) => 
         });
 
     } catch (err) {
-        console.log("Error checking AI status:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -656,7 +626,6 @@ router.post("/daily-challenge/participate", verifyToken, async (req, res) => {
         });
 
     } catch (err) {
-        console.log("Error participating in challenge:", err.message);
         if (err.message.includes('already participated')) {
             return res.status(400).json({ message: err.message });
         }
@@ -680,7 +649,6 @@ router.get("/daily-challenge/:id", async (req, res) => {
         });
 
     } catch (err) {
-        console.log("Error fetching challenge:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -730,7 +698,6 @@ router.post("/daily-challenge/participate", verifyToken, async (req, res) => {
         });
 
     } catch (err) {
-        console.log("Error participating in challenge:", err.message);
         if (err.message.includes('already participated')) {
             return res.status(400).json({ message: err.message });
         }
@@ -749,7 +716,6 @@ router.get("/daily-challenge/stats", verifyToken, async (req, res) => {
         });
 
     } catch (err) {
-        console.log("Error fetching challenge stats:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -798,7 +764,6 @@ router.get("/admin/daily-challenges", verifyToken, async (req, res) => {
         });
 
     } catch (err) {
-        console.log("Error fetching all challenges:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -850,7 +815,6 @@ router.post("/admin/daily-challenge/generate", verifyToken, async (req, res) => 
         });
 
     } catch (err) {
-        console.log("Error generating challenge:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -882,7 +846,6 @@ router.post("/admin/daily-challenge/:id/select-winner", verifyToken, async (req,
         });
 
     } catch (err) {
-        console.log("Error selecting winner:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -901,7 +864,6 @@ router.get("/daily-challenge/winners", async (req, res) => {
         });
 
     } catch (err) {
-        console.log("Error fetching winners:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -927,7 +889,6 @@ router.get("/daily-challenge/:id/details", async (req, res) => {
         });
 
     } catch (err) {
-        console.log("Error fetching challenge details:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -951,7 +912,6 @@ router.post("/admin/daily-challenge/end-yesterday", verifyToken, async (req, res
         });
 
     } catch (err) {
-        console.log("Error ending yesterday's challenges:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -975,7 +935,6 @@ router.post("/admin/daily-challenge/auto-select-winners", verifyToken, async (re
         });
 
     } catch (err) {
-        console.log("Error auto-selecting winners:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 });
@@ -999,7 +958,6 @@ router.get("/admin/daily-challenge/needs-winners", verifyToken, async (req, res)
         });
 
     } catch (err) {
-        console.log("Error fetching challenges needing winners:", err.message);
         return res.status(500).json({ message: "Internal server error" });
     }
 }); 

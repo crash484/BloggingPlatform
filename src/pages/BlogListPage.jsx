@@ -32,13 +32,6 @@ export default function BlogListPage() {
     useEffect(() => {
         dispatch(fetchBlogs());
     }, [dispatch]);
-    //rermove this in production
-    useEffect(() => {
-        console.log("BlogListPage: Current user:", currentUser);
-        console.log("BlogListPage: Blogs:", blogs);
-        console.log("BlogListPage: Loading:", isLoading);
-        console.log("BlogListPage: Error:", error);
-    }, [currentUser, blogs, isLoading, error]);
 
     useEffect(() => {
         if (error) {
@@ -136,7 +129,6 @@ export default function BlogListPage() {
     };
 
     if (!currentUser) {
-        console.log("BlogListPage: No current user, showing login prompt");
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-900 via-purple-900 to-indigo-900">
                 <div className="text-white text-center">
@@ -154,7 +146,6 @@ export default function BlogListPage() {
 
     // Add error boundary
     if (error && !isLoading) {
-        console.log("BlogListPage: Rendering error state");
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-900 via-purple-900 to-indigo-900">
                 <div className="text-white text-center">
@@ -420,4 +411,4 @@ export default function BlogListPage() {
       `}</style>
         </div>
     );
-} 
+}

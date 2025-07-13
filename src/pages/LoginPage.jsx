@@ -48,7 +48,6 @@ export default function LoginPage() {
 
       const data = await response.json(); if (response.ok) {
         toast.success("Login successful!");
-        console.log("Login response data:", data); // Debug log
 
         const userPayload = {
           user: {
@@ -59,8 +58,6 @@ export default function LoginPage() {
           },
           token: data.token
         };
-
-        console.log("Setting credentials with:", userPayload); // Debug log
 
         // localStorage is now handled automatically in authSlice
         dispatch(setCredentials(userPayload));
@@ -75,7 +72,6 @@ export default function LoginPage() {
         toast.error(data.message || 'Login failed. Please check your credentials.');
       }
     } catch (err) {
-      console.log(err);
       toast.error('Network error. Please check your connection.');
     } finally {
       setIsLoading(false);
@@ -168,4 +164,4 @@ export default function LoginPage() {
       `}</style>
     </div>
   );
-} 
+}

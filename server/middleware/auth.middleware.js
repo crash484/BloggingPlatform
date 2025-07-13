@@ -13,7 +13,6 @@ export const verifyToken = (req,res,next)=>{
         req.user = decoded;
         next();     
     } catch (err) {
-        console.log("error while decoding in middleware " + err); //remove in production
         res.status(403).json({message: "Invalid token"});
     }
 }

@@ -34,7 +34,6 @@ export const createBlog = createAsyncThunk(
     async (blogData, { rejectWithValue, getState }) => {
         try {
             const { token } = getState().auth
-            console.log(blogData);
             const response = await fetch('https://bloggingplatform-production.up.railway.app/api/auth/blogs', {
                 method: 'POST',
                 headers: {
@@ -309,4 +308,4 @@ export const selectIsDeleting = (state) => state.blog.isDeleting
 export const selectIsLiking = (state) => state.blog.isLiking
 export const selectIsCommenting = (state) => state.blog.isCommenting
 
-export default blogSlice.reducer 
+export default blogSlice.reducer

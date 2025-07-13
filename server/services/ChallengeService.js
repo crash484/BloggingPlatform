@@ -19,11 +19,8 @@ class ChallengeService {
     // Generate a daily challenge using AI
     async generateDailyChallenge(specificCategory = null) {
         try {
-            console.log('🤖 Starting AI challenge generation...');
-
             // Check if GEMINI_API_KEY is available
             if (!process.env.GEMINI_API_KEY) {
-                console.log('❌ GEMINI_API_KEY not found in environment variables, using fallback');
                 return this.getFallbackChallenge(specificCategory);
             }
 
@@ -31,8 +28,6 @@ class ChallengeService {
 
             const category = specificCategory || this.getRandomCategory();
             const difficulty = this.getRandomDifficulty();
-
-            console.log(`🎯 Generating challenge for category: ${category}, difficulty: ${difficulty}`);
 
             const prompt = `Generate a unique and engaging daily blog writing challenge for the category "${category}" with "${difficulty}" difficulty level.
 
@@ -50,12 +45,9 @@ Return the response in this exact JSON format:
     "tags": ["tag1", "tag2", "tag3"]
 }`;
 
-            console.log('📤 Sending request to Gemini AI...');
             const result = await model.generateContent(prompt);
             const response = await result.response;
             const text = response.text();
-
-            console.log('📥 Received AI response:', text.substring(0, 200) + '...');
 
             // Parse the JSON response
             let challengeData;
@@ -66,13 +58,10 @@ Return the response in this exact JSON format:
                 const jsonMatch = text.match(/\{[\s\S]*\}/);
                 if (jsonMatch) {
                     challengeData = JSON.parse(jsonMatch[0]);
-                    console.log('✅ Successfully parsed AI-generated challenge:', challengeData.topic);
                 } else {
                     throw new Error('No JSON found in response');
                 }
             } catch (parseError) {
-                console.log('❌ Failed to parse AI response, using fallback');
-                console.log('Parse error:', parseError.message);
                 challengeData = this.getFallbackChallenge(category);
                 isAIGenerated = false;
             }
@@ -92,12 +81,9 @@ Return the response in this exact JSON format:
                 }
             };
 
-            console.log(`🎉 Challenge generation ${isAIGenerated ? 'SUCCESS (AI)' : 'FALLBACK (Predefined)'}:`, challengeResult.topic);
             return challengeResult;
 
         } catch (error) {
-            console.error('❌ Error generating challenge with AI:', error.message);
-            console.log('🔄 Falling back to predefined challenge...');
             // Fallback to predefined challenges
             return this.getFallbackChallenge(specificCategory);
         }
@@ -106,22 +92,11 @@ Return the response in this exact JSON format:
     // Create and save today's challenge
     async createTodaysChallenge() {
         try {
-            console.log('📅 Checking for today\'s challenge...');
-
             // Check if today's challenge already exists
             const existingChallenge = await Challenge.getTodaysChallenge();
             if (existingChallenge) {
-                console.log('✅ Today\'s challenge already exists:', existingChallenge.topic);
-                console.log('📊 Challenge details:', {
-                    createdBy: existingChallenge.createdBy,
-                    isAIGenerated: existingChallenge.metadata?.isAIGenerated || false,
-                    category: existingChallenge.category,
-                    difficulty: existingChallenge.difficulty
-                });
                 return existingChallenge;
             }
-
-            console.log('🆕 No challenge found for today, creating new one...');
 
             // Generate new challenge
             const challengeData = await this.generateDailyChallenge();
@@ -137,14 +112,6 @@ Return the response in this exact JSON format:
             });
 
             const savedChallenge = await challenge.save();
-            console.log('💾 Daily challenge saved to database:', savedChallenge.topic);
-            console.log('📊 Final challenge details:', {
-                createdBy: savedChallenge.createdBy,
-                isAIGenerated: savedChallenge.metadata?.isAIGenerated || false,
-                category: savedChallenge.category,
-                difficulty: savedChallenge.difficulty,
-                tags: savedChallenge.tags
-            });
             return savedChallenge;
 
         } catch (error) {
@@ -250,7 +217,6 @@ Return the response in this exact JSON format:
     async checkAIStatus() {
         try {
             const hasApiKey = !!process.env.GEMINI_API_KEY;
-            console.log('🔍 Debug: API Key exists:', hasApiKey);
             
             if (!hasApiKey) {
                 return {
@@ -269,8 +235,6 @@ Return the response in this exact JSON format:
             const response = await result.response;
             const text = response.text();
 
-            console.log('🔍 Debug: AI test response:', text);
-
             const isWorking = text.includes('Hello');
 
             return {
@@ -280,7 +244,6 @@ Return the response in this exact JSON format:
                 testResponse: text.substring(0, 100)
             };
         } catch (error) {
-            console.error('🔍 Debug: AI check error:', error.message);
             return {
                 hasApiKey: !!process.env.GEMINI_API_KEY,
                 isWorking: false,

@@ -24,7 +24,6 @@ export default function DailyChallenge() {
             const data = await response.json();
             setChallenge(data.challenge);
         } catch (err) {
-            console.error('Error fetching challenge:', err);
             setError(err.message);
             toast.error('Failed to load today\'s challenge');
         } finally {
@@ -119,4 +118,4 @@ export default function DailyChallenge() {
             </div>
         </div>
     );
-} 
+}

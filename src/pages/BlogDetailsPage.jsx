@@ -35,7 +35,6 @@ export default function BlogDetailsPage() {
 
     useEffect(() => {
         if (blogId) {
-            console.log("BlogDetailsPage: Fetching blog with ID:", blogId);
             dispatch(fetchBlogById(blogId));
         }
 
@@ -44,13 +43,6 @@ export default function BlogDetailsPage() {
             dispatch(clearCurrentBlog());
         };
     }, [dispatch, blogId]);
-
-    useEffect(() => {
-        console.log("BlogDetailsPage: Current user:", currentUser);
-        console.log("BlogDetailsPage: Current blog:", currentBlog);
-        console.log("BlogDetailsPage: Loading:", isLoading);
-        console.log("BlogDetailsPage: Error:", error);
-    }, [currentUser, currentBlog, isLoading, error]);
 
     useEffect(() => {
         if (error) {
@@ -134,7 +126,6 @@ export default function BlogDetailsPage() {
     };
 
     if (!currentUser) {
-        console.log("BlogDetailsPage: No current user, showing login prompt");
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-900 via-purple-900 to-indigo-900">
                 <div className="text-white text-center">
@@ -151,7 +142,6 @@ export default function BlogDetailsPage() {
     }
 
     if (error && !isLoading) {
-        console.log("BlogDetailsPage: Rendering error state");
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-900 via-purple-900 to-indigo-900">
                 <div className="text-white text-center">
@@ -449,4 +439,4 @@ export default function BlogDetailsPage() {
       `}</style>
         </div>
     );
-} 
+}

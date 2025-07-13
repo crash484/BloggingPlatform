@@ -32,7 +32,6 @@ export default function ChallengeLeaderboardPage() {
             const data = await response.json();
             setLeaderboard(data.leaderboard);
         } catch (error) {
-            console.error('Error fetching leaderboard:', error);
             toast.error('Failed to load leaderboard');
         } finally {
             setLoading(false);
@@ -55,7 +54,7 @@ export default function ChallengeLeaderboardPage() {
                 setStats(data.stats);
             }
         } catch (error) {
-            console.error('Error fetching stats:', error);
+            // Error handled silently
         }
     }, []);
 
@@ -265,4 +264,4 @@ export default function ChallengeLeaderboardPage() {
             </div>
         </div>
     );
-} 
+}
