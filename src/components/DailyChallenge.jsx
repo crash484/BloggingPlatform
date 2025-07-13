@@ -15,7 +15,7 @@ export default function DailyChallenge() {
     const fetchTodaysChallenge = async () => {
         try {
             setLoading(true);
-            const response = await fetch('http://localhost:5000/api/auth/daily-challenge');
+            const response = await fetch('https://bloggingplatform-production.up.railway.app/api/auth/daily-challenge');
             
             if (!response.ok) {
                 throw new Error('Failed to fetch today\'s challenge');

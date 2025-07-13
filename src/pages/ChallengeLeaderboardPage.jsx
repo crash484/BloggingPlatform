@@ -23,7 +23,7 @@ export default function ChallengeLeaderboardPage() {
     const fetchLeaderboard = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await fetch(`http://localhost:5000/api/auth/daily-challenge/leaderboard?timeframe=${timeframe}&limit=10`);
+            const response = await fetch(`https://bloggingplatform-production.up.railway.app/api/auth/daily-challenge/leaderboard?timeframe=${timeframe}&limit=10`);
 
             if (!response.ok) {
                 throw new Error('Failed to fetch leaderboard');
@@ -44,7 +44,7 @@ export default function ChallengeLeaderboardPage() {
             const token = localStorage.getItem('authToken');
             if (!token) return;
 
-            const response = await fetch('http://localhost:5000/api/auth/daily-challenge/stats', {
+            const response = await fetch('https://bloggingplatform-production.up.railway.app/api/auth/daily-challenge/stats', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }

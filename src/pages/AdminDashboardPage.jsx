@@ -22,7 +22,7 @@ export default function AdminDashboardPage() {
             console.log('🔍 Debug: Token exists:', !!token);
 
             // Fetch user statistics
-            const usersResponse = await fetch('http://localhost:5000/api/auth/admin', {
+            const usersResponse = await fetch('https://bloggingplatform-production.up.railway.app/api/auth/admin', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -41,7 +41,7 @@ export default function AdminDashboardPage() {
             }
 
             // Fetch AI status and challenge details
-            const aiResponse = await fetch('http://localhost:5000/api/auth/admin/daily-challenge/ai-status', {
+            const aiResponse = await fetch('https://bloggingplatform-production.up.railway.app/api/auth/admin/daily-challenge/ai-status', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }

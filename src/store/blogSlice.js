@@ -5,7 +5,7 @@ export const fetchBlogs = createAsyncThunk(
     'blog/fetchBlogs',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await fetch('http://localhost:5000/api/auth/blogs')
+            const response = await fetch('https://bloggingplatform-production.up.railway.app/api/auth/blogs')
             const data = await response.json()
             if (!response.ok) throw new Error(data.message)
             return data
@@ -19,7 +19,7 @@ export const fetchBlogById = createAsyncThunk(
     'blog/fetchBlogById',
     async (blogId, { rejectWithValue }) => {
         try {
-            const response = await fetch(`http://localhost:5000/api/auth/blogs/${blogId}`)
+            const response = await fetch(`https://bloggingplatform-production.up.railway.app/api/auth/blogs/${blogId}`)
             const data = await response.json()
             if (!response.ok) throw new Error(data.message)
             return data
@@ -35,7 +35,7 @@ export const createBlog = createAsyncThunk(
         try {
             const { token } = getState().auth
             console.log(blogData);
-            const response = await fetch('http://localhost:5000/api/auth/blogs', {
+            const response = await fetch('https://bloggingplatform-production.up.railway.app/api/auth/blogs', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -58,7 +58,7 @@ export const updateBlog = createAsyncThunk(
     async ({ blogId, blogData }, { rejectWithValue, getState }) => {
         try {
             const { token } = getState().auth
-            const response = await fetch(`http://localhost:5000/api/auth/blogs/${blogId}`, {
+            const response = await fetch(`https://bloggingplatform-production.up.railway.app/api/auth/blogs/${blogId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -80,7 +80,7 @@ export const deleteBlog = createAsyncThunk(
     async (blogId, { rejectWithValue, getState }) => {
         try {
             const { token } = getState().auth
-            const response = await fetch(`http://localhost:5000/api/auth/blogs/${blogId}`, {
+            const response = await fetch(`https://bloggingplatform-production.up.railway.app/api/auth/blogs/${blogId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -103,7 +103,7 @@ export const toggleLike = createAsyncThunk(
     async (blogId, { rejectWithValue, getState }) => {
         try {
             const { token } = getState().auth
-            const response = await fetch(`http://localhost:5000/api/auth/blogs/${blogId}/like`, {
+            const response = await fetch(`https://bloggingplatform-production.up.railway.app/api/auth/blogs/${blogId}/like`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -123,7 +123,7 @@ export const addComment = createAsyncThunk(
     async ({ blogId, commentText }, { rejectWithValue, getState }) => {
         try {
             const { token } = getState().auth
-            const response = await fetch(`http://localhost:5000/api/auth/blogs/${blogId}/comments`, {
+            const response = await fetch(`https://bloggingplatform-production.up.railway.app/api/auth/blogs/${blogId}/comments`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
