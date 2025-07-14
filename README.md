@@ -1,12 +1,37 @@
-# React + Vite
+# 📝 Blogging Platform
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, full-stack **blogging platform** built using the MERN stack, enhanced with AI content features, JWT authentication, rich text editing, and a clean Tailwind UI. Deployed on **Vercel** for the frontend and powered by **Express.js & MongoDB** for the backend.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Live Demo
 
-## Expanding the ESLint configuration
+🔗 [https://blogging-platform-bice.vercel.app](https://blogging-platform-bice.vercel.app/)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+## ⚙️ Tech Stack
+
+### Frontend
+- ⚛️ React 18
+- ⚡ Vite for blazing-fast builds
+- 💅 TailwindCSS for utility-first styling
+- 🔄 Redux Toolkit for state management
+- 📄 React Quill for rich text editing
+- 📦 React Dropzone for file uploads
+- 🔔 React Hot Toast for beautiful notifications
+- 🌐 React Router DOM v7
+
+### Backend
+- 🧠 Express.js with ES Modules
+- 🔐 JWT-based Authentication
+- 🔒 Bcrypt for password hashing
+- 🧬 Mongoose for MongoDB interaction
+- ⏰ Node-Cron for scheduled tasks
+- 🌍 CORS with custom origin whitelist
+- 🧪 dotenv for environment config
+
+### AI Integration
+- 🤖 Google Generative AI (`@google/generative-ai`) for smart writing suggestions and enhancements.
+
+---
