@@ -49,11 +49,11 @@ const initializeDailyChallenge = async () => {
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log("connected to database");
-    
+
     // Initialize daily challenge after DB connection
     initializeDailyChallenge();
-    
-    app.listen(port, () => { 
+
+    app.listen(port, () => {
       console.log(`server is running on port ${port}`);
       console.log('Daily challenge cron job scheduled for 12:01 AM daily');
     });
